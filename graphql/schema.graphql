@@ -1,0 +1,593 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"A date string with format `Y-m-d`, e.g. `2018-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+"A JSON scalar for flexible data structures."
+scalar JSON @scalar(class: "MLL\\GraphQLScalars\\JSON")
+
+"File upload scalar for handling file uploads."
+scalar Upload @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload")
+
+# ============================================
+# ENUMS
+# ============================================
+
+enum UserRole {
+    SUPER_ADMIN @enum(value: "super_admin")
+    ADMIN @enum(value: "admin")
+    USER @enum(value: "user")
+}
+
+enum RecordStatus {
+    ACTIVE @enum(value: "active")
+    INACTIVE @enum(value: "inactive")
+    PENDING @enum(value: "pending")
+    SUSPENDED @enum(value: "suspended")
+}
+
+enum ModuleType {
+    LINK @enum(value: "link")
+    MODAL @enum(value: "modal")
+    EXTERNAL @enum(value: "external")
+}
+
+# ============================================
+# TYPES
+# ============================================
+
+"Empresa/Organización en el sistema"
+type Company {
+    id: ID!
+    name: String!
+    slug: String!
+    tax_id: String
+    email: String
+    phone: String
+    address: String
+    website: String
+    status: RecordStatus!
+    max_admins: Int!
+    configuration: CompanyConfiguration
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Configuración visual y de branding de la empresa"
+type CompanyConfiguration {
+    id: ID!
+    company_id: ID!
+    logo_url: String
+    logo_width: Int
+    logo_height: Int
+    favicon_url: String
+    primary_color: String!
+    secondary_color: String!
+    accent_color: String!
+    background_color: String!
+    text_color: String!
+    error_color: String!
+    success_color: String!
+    warning_color: String!
+    module_bg_color: String!
+    module_hover_color: String!
+    header_title: String
+    footer_text: String
+    show_calendar: Boolean!
+    show_news_ticker: Boolean!
+    show_contacts: Boolean!
+    meta_title: String
+    meta_description: String
+    theme_colors: ThemeColors!
+}
+
+"Colores del tema agrupados"
+type ThemeColors {
+    primary: String!
+    secondary: String!
+    accent: String!
+    background: String!
+    text: String!
+    error: String!
+    success: String!
+    warning: String!
+    module_bg: String!
+    module_hover: String!
+}
+
+"Usuario del sistema"
+type User {
+    id: ID!
+    company_id: ID!
+    email: String!
+    name: String!
+    last_name: String
+    full_name: String!
+    phone: String
+    avatar_url: String
+    role: UserRole!
+    status: RecordStatus!
+    email_verified_at: DateTime
+    last_login_at: DateTime
+    company: Company!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Módulo/Item del dashboard"
+type Module {
+    id: ID!
+    company_id: ID!
+    label: String!
+    description: String
+    type: ModuleType!
+    url: String
+    target: String!
+    modal_id: String
+    icon: String!
+    icon_type: String!
+    highlight: String
+    background_color: String
+    is_featured: Boolean!
+    sort_order: Int!
+    group_name: String
+    status: RecordStatus!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Evento del calendario"
+type CalendarEvent {
+    id: ID!
+    company_id: ID!
+    title: String!
+    description: String
+    content: String
+    event_date: Date!
+    start_time: String
+    end_time: String
+    is_all_day: Boolean!
+    is_recurring: Boolean!
+    recurrence_rule: String
+    color: String!
+    icon: String
+    status: RecordStatus!
+    day: Int!
+    month: Int!
+    year: Int!
+    creator: User
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Noticia para el cintillo informativo"
+type NewsItem {
+    id: ID!
+    company_id: ID!
+    text: String!
+    url: String
+    starts_at: DateTime
+    ends_at: DateTime
+    sort_order: Int!
+    is_priority: Boolean!
+    status: RecordStatus!
+    creator: User
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Contacto del directorio"
+type Contact {
+    id: ID!
+    company_id: ID!
+    name: String!
+    last_name: String
+    full_name: String!
+    department: String
+    position: String
+    email: String
+    phone: String
+    extension: String
+    mobile: String
+    phone_with_extension: String
+    avatar_url: String
+    sort_order: Int!
+    status: RecordStatus!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Imagen del banner/slider"
+type BannerImage {
+    id: ID!
+    company_id: ID!
+    url: String!
+    alt_text: String
+    original_name: String
+    mime_type: String
+    file_size: Int
+    formatted_file_size: String
+    width: Int
+    height: Int
+    dimensions: String
+    link_url: String
+    link_target: String!
+    sort_order: Int!
+    status: RecordStatus!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"Log de actividad"
+type ActivityLog {
+    id: ID!
+    company_id: ID
+    user_id: ID
+    action: String!
+    entity_type: String
+    entity_id: ID
+    description: String
+    old_values: JSON
+    new_values: JSON
+    ip_address: String
+    user_agent: String
+    user: User
+    created_at: DateTime!
+}
+
+"Estadísticas de caché"
+type CacheStats {
+    driver: String!
+    supports_tagging: Boolean!
+    memory: CacheMemory
+    keys_count: Int
+}
+
+type CacheMemory {
+    used: String
+    peak: String
+}
+
+# ============================================
+# RESPONSE TYPES
+# ============================================
+
+"Respuesta de autenticación"
+type AuthPayload {
+    user: User!
+    access_token: String!
+    refresh_token: String!
+    expires_at: DateTime!
+}
+
+"Respuesta con token renovado"
+type RefreshTokenPayload {
+    access_token: String!
+    expires_at: DateTime!
+}
+
+"Respuesta de mensaje genérico"
+type MessageResponse {
+    success: Boolean!
+    message: String!
+}
+
+# ============================================
+# INPUT TYPES
+# ============================================
+
+input CreateUserInput {
+    company_id: ID!
+    email: String!
+    password: String!
+    name: String!
+    last_name: String
+    phone: String
+    role: UserRole!
+}
+
+input UpdateUserInput {
+    email: String
+    name: String
+    last_name: String
+    phone: String
+    avatar_url: String
+    role: UserRole
+    status: RecordStatus
+}
+
+input CreateModuleInput {
+    company_id: ID!
+    label: String!
+    description: String
+    type: ModuleType
+    url: String
+    target: String
+    modal_id: String
+    icon: String!
+    icon_type: String
+    highlight: String
+    background_color: String
+    is_featured: Boolean
+    sort_order: Int
+    group_name: String
+    status: RecordStatus
+}
+
+input UpdateModuleInput {
+    label: String
+    description: String
+    type: ModuleType
+    url: String
+    target: String
+    modal_id: String
+    icon: String
+    icon_type: String
+    highlight: String
+    background_color: String
+    is_featured: Boolean
+    sort_order: Int
+    group_name: String
+    status: RecordStatus
+}
+
+input CreateNewsInput {
+    company_id: ID!
+    text: String!
+    url: String
+    starts_at: DateTime
+    ends_at: DateTime
+    sort_order: Int
+    is_priority: Boolean
+    status: RecordStatus
+}
+
+input UpdateNewsInput {
+    text: String
+    url: String
+    starts_at: DateTime
+    ends_at: DateTime
+    sort_order: Int
+    is_priority: Boolean
+    status: RecordStatus
+}
+
+input CreateEventInput {
+    company_id: ID!
+    title: String!
+    description: String
+    content: String
+    event_date: Date!
+    start_time: String
+    end_time: String
+    is_all_day: Boolean
+    is_recurring: Boolean
+    recurrence_rule: String
+    color: String
+    icon: String
+    status: RecordStatus
+}
+
+input UpdateEventInput {
+    title: String
+    description: String
+    content: String
+    event_date: Date
+    start_time: String
+    end_time: String
+    is_all_day: Boolean
+    is_recurring: Boolean
+    recurrence_rule: String
+    color: String
+    icon: String
+    status: RecordStatus
+}
+
+input CreateContactInput {
+    company_id: ID!
+    name: String!
+    last_name: String
+    department: String
+    position: String
+    email: String
+    phone: String
+    extension: String
+    mobile: String
+    avatar_url: String
+    sort_order: Int
+    status: RecordStatus
+}
+
+input UpdateContactInput {
+    name: String
+    last_name: String
+    department: String
+    position: String
+    email: String
+    phone: String
+    extension: String
+    mobile: String
+    avatar_url: String
+    sort_order: Int
+    status: RecordStatus
+}
+
+input UpdateConfigInput {
+    logo_url: String
+    logo_width: Int
+    logo_height: Int
+    favicon_url: String
+    primary_color: String
+    secondary_color: String
+    accent_color: String
+    background_color: String
+    text_color: String
+    error_color: String
+    success_color: String
+    warning_color: String
+    module_bg_color: String
+    module_hover_color: String
+    header_title: String
+    footer_text: String
+    show_calendar: Boolean
+    show_news_ticker: Boolean
+    show_contacts: Boolean
+    meta_title: String
+    meta_description: String
+}
+
+# ============================================
+# QUERIES
+# ============================================
+
+type Query {
+    # Dashboard - Público (requiere companyId)
+    "Obtener módulos del dashboard"
+    modules(companyId: ID!): [Module!]! @field(resolver: "App\\GraphQL\\Queries\\ModulesQuery")
+
+    "Obtener un módulo por ID"
+    module(id: ID!): Module @find
+
+    "Obtener contactos del directorio"
+    contacts(companyId: ID!, search: String): [Contact!]! @field(resolver: "App\\GraphQL\\Queries\\ContactsQuery")
+
+    "Obtener un contacto por ID"
+    contact(id: ID!): Contact @find
+
+    "Obtener eventos del calendario"
+    calendarEvents(companyId: ID!, month: Int, year: Int): [CalendarEvent!]! @field(resolver: "App\\GraphQL\\Queries\\CalendarEventsQuery")
+
+    "Obtener evento por día"
+    eventByDay(companyId: ID!, day: Int!): CalendarEvent @field(resolver: "App\\GraphQL\\Queries\\EventByDayQuery")
+
+    "Obtener noticias activas"
+    newsItems(companyId: ID!): [NewsItem!]! @field(resolver: "App\\GraphQL\\Queries\\NewsQuery")
+
+    "Obtener imágenes del banner"
+    bannerImages(companyId: ID!): [BannerImage!]! @field(resolver: "App\\GraphQL\\Queries\\BannerImagesQuery")
+
+    "Obtener configuración de la empresa"
+    companyConfiguration(companyId: ID!): CompanyConfiguration @field(resolver: "App\\GraphQL\\Queries\\CompanyConfigurationQuery")
+
+    # Admin - Requiere autenticación
+    "Listar empresas"
+    companies(search: String): [Company!]! @guard @field(resolver: "App\\GraphQL\\Queries\\CompaniesQuery")
+
+    "Obtener una empresa por ID"
+    company(id: ID!): Company @guard @find
+
+    "Listar usuarios de una empresa"
+    users(companyId: ID!, role: String): [User!]! @guard @field(resolver: "App\\GraphQL\\Queries\\UsersQuery")
+
+    "Obtener un usuario por ID"
+    user(id: ID!): User @guard @find
+
+    "Obtener logs de actividad"
+    activityLogs(companyId: ID!, limit: Int): [ActivityLog!]! @guard @field(resolver: "App\\GraphQL\\Queries\\ActivityLogsQuery")
+
+    "Obtener estadísticas de caché"
+    cacheStats: CacheStats! @guard @field(resolver: "App\\GraphQL\\Queries\\CacheStatsQuery")
+
+    "Obtener usuario autenticado"
+    me: User @guard @auth
+}
+
+# ============================================
+# MUTATIONS
+# ============================================
+
+type Mutation {
+    # Autenticación
+    "Iniciar sesión"
+    login(email: String!, password: String!, companyId: ID!): AuthPayload! @field(resolver: "App\\GraphQL\\Mutations\\LoginMutation")
+
+    "Cerrar sesión"
+    logout: Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\LogoutMutation")
+
+    "Refrescar token de acceso"
+    refreshToken(refreshToken: String!): RefreshTokenPayload! @field(resolver: "App\\GraphQL\\Mutations\\RefreshTokenMutation")
+
+    "Solicitar restablecimiento de contraseña"
+    requestPasswordReset(email: String!): MessageResponse! @field(resolver: "App\\GraphQL\\Mutations\\RequestPasswordResetMutation")
+
+    "Restablecer contraseña"
+    resetPassword(token: String!, password: String!, passwordConfirmation: String!): MessageResponse! @field(resolver: "App\\GraphQL\\Mutations\\ResetPasswordMutation")
+
+    # Usuarios (Admin)
+    "Crear usuario"
+    createUser(input: CreateUserInput!): User! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateUserMutation")
+
+    "Actualizar usuario"
+    updateUser(id: ID!, input: UpdateUserInput!): User! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateUserMutation")
+
+    "Eliminar usuario"
+    deleteUser(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteUserMutation")
+
+    # Módulos (Admin)
+    "Crear módulo"
+    createModule(input: CreateModuleInput!): Module! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateModuleMutation")
+
+    "Actualizar módulo"
+    updateModule(id: ID!, input: UpdateModuleInput!): Module! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateModuleMutation")
+
+    "Eliminar módulo"
+    deleteModule(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteModuleMutation")
+
+    "Reordenar módulos"
+    reorderModules(ids: [ID!]!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\ReorderModulesMutation")
+
+    # Noticias (Admin)
+    "Crear noticia"
+    createNews(input: CreateNewsInput!): NewsItem! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateNewsMutation")
+
+    "Actualizar noticia"
+    updateNews(id: ID!, input: UpdateNewsInput!): NewsItem! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateNewsMutation")
+
+    "Eliminar noticia"
+    deleteNews(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteNewsMutation")
+
+    # Eventos de Calendario (Admin)
+    "Crear evento"
+    createCalendarEvent(input: CreateEventInput!): CalendarEvent! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateCalendarEventMutation")
+
+    "Actualizar evento"
+    updateCalendarEvent(id: ID!, input: UpdateEventInput!): CalendarEvent! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateCalendarEventMutation")
+
+    "Eliminar evento"
+    deleteCalendarEvent(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteCalendarEventMutation")
+
+    # Contactos (Admin)
+    "Crear contacto"
+    createContact(input: CreateContactInput!): Contact! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateContactMutation")
+
+    "Actualizar contacto"
+    updateContact(id: ID!, input: UpdateContactInput!): Contact! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateContactMutation")
+
+    "Eliminar contacto"
+    deleteContact(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteContactMutation")
+
+    # Banner (Admin)
+    "Subir imagen al banner"
+    uploadBannerImage(file: Upload!, companyId: ID!): BannerImage! @guard @field(resolver: "App\\GraphQL\\Mutations\\UploadBannerImageMutation")
+
+    "Eliminar imagen del banner"
+    deleteBannerImage(id: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteBannerImageMutation")
+
+    "Reordenar imágenes del banner"
+    reorderBannerImages(ids: [ID!]!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\ReorderBannerImagesMutation")
+
+    # Configuración de Empresa (Admin)
+    "Actualizar configuración de empresa"
+    updateCompanyConfiguration(companyId: ID!, input: UpdateConfigInput!): CompanyConfiguration! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateCompanyConfigurationMutation")
+
+    "Subir logo de empresa"
+    uploadCompanyLogo(file: Upload!, companyId: ID!): CompanyConfiguration! @guard @field(resolver: "App\\GraphQL\\Mutations\\UploadCompanyLogoMutation")
+
+    # Caché (Admin)
+    "Limpiar caché de empresa"
+    clearCache(companyId: ID!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\ClearCacheMutation")
+
+    "Refrescar caché específico"
+    refreshCache(companyId: ID!, type: String!): Boolean! @guard @field(resolver: "App\\GraphQL\\Mutations\\RefreshCacheMutation")
+}
