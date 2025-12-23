@@ -49,6 +49,7 @@ class User extends Authenticatable
         'avatar_url',
         'role',
         'status',
+        'is_primary_admin',
     ];
 
     /**
@@ -71,6 +72,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'password_reset_expires_at' => 'datetime',
             'password' => 'hashed',
+            'is_primary_admin' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -139,6 +141,24 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return in_array($this->role, ['super_admin', 'admin']);
+    }
+
+    /**
+     * Verificar si el usuario es el administrador primario de su empresa
+     * Solo el admin primario puede crear otros administradores
+     */
+    public function isPrimaryAdmin(): bool
+    {
+        return $this->role === 'admin' && $this->is_primary_admin === true;
+    }
+
+    /**
+     * Verificar si el usuario puede crear otros administradores
+     * Super admins siempre pueden, admins solo si son primarios
+     */
+    public function canCreateAdmins(): bool
+    {
+        return $this->isSuperAdmin() || $this->isPrimaryAdmin();
     }
 
     /**

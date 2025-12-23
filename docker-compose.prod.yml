@@ -1,0 +1,46 @@
+version: '3.8'
+
+# Production override configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  app:
+    build:
+      args:
+        - APP_ENV=production
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    restart: always
+
+  nginx:
+    restart: always
+    volumes:
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+
+  pgsql:
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-} --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+  horizon:
+    restart: always
+    environment:
+      - APP_ENV=production
+
+  # Disable development services in production
+  mailpit:
+    profiles:
+      - never
+
+  pgadmin:
+    profiles:
+      - admin
+
+  node:
+    profiles:
+      - never
