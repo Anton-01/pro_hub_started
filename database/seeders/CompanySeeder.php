@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\CompanyConfiguration;
 use App\Models\CacheSetting;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class CompanySeeder extends Seeder
 {
@@ -15,6 +14,26 @@ class CompanySeeder extends Seeder
      */
     public function run(): void
     {
+        // Empresa del Sistema (para Super Admins)
+        $systemCompany = Company::create([
+            'id' => 'c0000000-0000-0000-0000-000000000000',
+            'name' => 'Panel Empresarial - Sistema',
+            'slug' => 'sistema',
+            'email' => 'sistema@panelempresarial.com',
+            'status' => 'active',
+            'max_admins' => 2,
+        ]);
+
+        CompanyConfiguration::create([
+            'company_id' => $systemCompany->id,
+            'primary_color' => '#4c78dd',
+            'secondary_color' => '#1a1f2c',
+        ]);
+
+        CacheSetting::create([
+            'company_id' => $systemCompany->id,
+        ]);
+
         // Empresa de demostración principal
         $demoCompany = Company::create([
             'id' => 'c0000000-0000-0000-0000-000000000001',
@@ -29,7 +48,6 @@ class CompanySeeder extends Seeder
             'max_admins' => 5,
         ]);
 
-        // Configuración de la empresa demo
         CompanyConfiguration::create([
             'company_id' => $demoCompany->id,
             'logo_url' => null,
@@ -38,7 +56,7 @@ class CompanySeeder extends Seeder
             'accent_color' => '#f59e0b',
             'background_color' => '#0d1b4c',
             'text_color' => '#ffffff',
-            'header_title' => 'Portal de Empleados',
+            'header_text' => 'Portal de Empleados',
             'footer_text' => '© 2024 Empresa Demo. Todos los derechos reservados.',
             'show_calendar' => true,
             'show_news_ticker' => true,
@@ -47,7 +65,6 @@ class CompanySeeder extends Seeder
             'meta_description' => 'Portal interno de empleados de Empresa Demo',
         ]);
 
-        // Configuración de caché
         CacheSetting::create([
             'company_id' => $demoCompany->id,
         ]);
@@ -73,7 +90,7 @@ class CompanySeeder extends Seeder
             'accent_color' => '#10b981',
             'background_color' => '#111827',
             'text_color' => '#f9fafb',
-            'header_title' => 'Tech Solutions - Intranet',
+            'header_text' => 'Tech Solutions - Intranet',
             'footer_text' => '© 2024 Tech Solutions SA',
         ]);
 
@@ -81,6 +98,9 @@ class CompanySeeder extends Seeder
             'company_id' => $techCompany->id,
         ]);
 
-        $this->command->info('Empresas de prueba creadas exitosamente.');
+        $this->command->info('✓ Empresas creadas:');
+        $this->command->info('  - Panel Empresarial - Sistema (para Super Admins)');
+        $this->command->info('  - Empresa Demo');
+        $this->command->info('  - Tech Solutions SA');
     }
 }

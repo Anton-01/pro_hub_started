@@ -1,0 +1,189 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # Laravel Application (PHP-FPM)
+  # ===========================================
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        - PHP_VERSION=8.4
+    container_name: panel_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - DB_HOST=pgsql
+      - REDIS_HOST=redis
+      - MAIL_HOST=mailpit
+    networks:
+      - panel_network
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ===========================================
+  # Nginx Web Server
+  # ===========================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: panel_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+      - "${APP_SSL_PORT:-443}:443"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - panel_network
+    depends_on:
+      - app
+
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  pgsql:
+    image: postgres:16-alpine
+    container_name: panel_pgsql
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-panel_empresarial}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+      - ./docker/pgsql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - panel_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-panel_empresarial}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # pgAdmin - Database Management
+  # ===========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: panel_pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@panel.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - panel_network
+    depends_on:
+      - pgsql
+
+  # ===========================================
+  # Redis - Cache & Queue
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: panel_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - panel_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Laravel Horizon - Queue Worker
+  # ===========================================
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/horizon/Dockerfile
+    container_name: panel_horizon
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - DB_HOST=pgsql
+      - REDIS_HOST=redis
+    networks:
+      - panel_network
+    depends_on:
+      - app
+      - redis
+
+  # ===========================================
+  # Mailpit - Email Testing (Development)
+  # ===========================================
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: panel_mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+      - "${MAIL_PORT:-1025}:1025"
+    networks:
+      - panel_network
+
+  # ===========================================
+  # Node.js - Asset Compilation (Development)
+  # ===========================================
+  node:
+    image: node:20-alpine
+    container_name: panel_node
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    networks:
+      - panel_network
+    profiles:
+      - development
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  panel_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  pgsql_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
