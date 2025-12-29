@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ===========================================
   # Laravel Application (PHP-FPM)
@@ -16,6 +14,7 @@ services:
     volumes:
       - .:/var/www/html
       - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ~/.composer:/root/.composer
     environment:
       - APP_ENV=${APP_ENV:-local}
       - APP_DEBUG=${APP_DEBUG:-true}
@@ -84,8 +83,8 @@ services:
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@panel.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-secret}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin_data:/var/lib/pgadmin
@@ -118,9 +117,10 @@ services:
   # Laravel Horizon - Queue Worker
   # ===========================================
   horizon:
-    build:
-      context: .
-      dockerfile: docker/horizon/Dockerfile
+    image: pro_hub_started-app
+    depends_on:
+      - app
+      - redis
     container_name: panel_horizon
     restart: unless-stopped
     working_dir: /var/www/html
@@ -132,9 +132,6 @@ services:
       - REDIS_HOST=redis
     networks:
       - panel_network
-    depends_on:
-      - app
-      - redis
 
   # ===========================================
   # Mailpit - Email Testing (Development)
@@ -158,6 +155,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - /var/www/html/node_modules
     command: sh -c "npm install && npm run dev"
     ports:
       - "${VITE_PORT:-5173}:5173"
@@ -175,7 +173,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.28.0.0/16
 
 # ===========================================
 # Volumes

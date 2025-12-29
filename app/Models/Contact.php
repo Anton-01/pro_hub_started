@@ -48,7 +48,7 @@ class Contact extends Model
         'extension',
         'mobile',
         'avatar_url',
-        'sort_order',
+        'order',
         'status',
     ];
 
@@ -56,7 +56,7 @@ class Contact extends Model
      * Atributos que deben ser casteados
      */
     protected $casts = [
-        'sort_order' => 'integer',
+        'order' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -66,7 +66,7 @@ class Contact extends Model
      * Valores por defecto para los atributos
      */
     protected $attributes = [
-        'sort_order' => 0,
+        'order' => 0,
         'status' => 'active',
     ];
 
@@ -109,11 +109,11 @@ class Contact extends Model
     }
 
     /**
-     * Scope para ordenar por sort_order
+     * Scope para ordenar por order
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order', 'asc');
+        return $query->orderBy('order', 'asc');
     }
 
     /**

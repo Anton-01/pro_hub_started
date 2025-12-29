@@ -16,7 +16,7 @@ class CompanySeeder extends Seeder
     {
         // Empresa del Sistema (para Super Admins)
         $systemCompany = Company::create([
-            'id' => 'c0000000-0000-0000-0000-000000000000',
+            'id' => 'c775596e-6fae-4f78-8a48-6520d9485945',
             'name' => 'Panel Empresarial - Sistema',
             'slug' => 'sistema',
             'email' => 'sistema@panelempresarial.com',
@@ -36,7 +36,7 @@ class CompanySeeder extends Seeder
 
         // Empresa de demostración principal
         $demoCompany = Company::create([
-            'id' => 'c0000000-0000-0000-0000-000000000001',
+            'id' => 'bfbcb072-61ba-49bf-bc14-aeaace3778e4',
             'name' => 'Empresa Demo',
             'slug' => 'empresa-demo',
             'tax_id' => 'XAXX010101000',
@@ -71,7 +71,7 @@ class CompanySeeder extends Seeder
 
         // Segunda empresa de prueba
         $techCompany = Company::create([
-            'id' => 'c0000000-0000-0000-0000-000000000002',
+            'id' => '3f3f585f-ee7a-44e3-9a77-99600ab30d69',
             'name' => 'Tech Solutions SA',
             'slug' => 'tech-solutions',
             'tax_id' => 'TSO120101ABC',

@@ -40,6 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'users',
+        ],
     ],
 
     /*
@@ -112,4 +117,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maximum Active Sessions
+    |--------------------------------------------------------------------------
+    |
+    | This value defines the maximum number of active sessions a user can have
+    | at the same time. When this limit is reached, the oldest session will
+    | be invalidated when a new login occurs.
+    |
+    */
+
+    'max_sessions' => env('AUTH_MAX_SESSIONS', 5),
 ];

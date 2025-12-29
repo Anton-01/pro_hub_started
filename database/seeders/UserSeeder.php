@@ -13,16 +13,16 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $systemCompanyId = 'c0000000-0000-0000-0000-000000000000';
-        $demoCompanyId = 'c0000000-0000-0000-0000-000000000001';
-        $techCompanyId = 'c0000000-0000-0000-0000-000000000002';
+        $systemCompanyId = 'c775596e-6fae-4f78-8a48-6520d9485945';
+        $demoCompanyId = 'bfbcb072-61ba-49bf-bc14-aeaace3778e4';
+        $techCompanyId = '3f3f585f-ee7a-44e3-9a77-99600ab30d69';
 
         // =============================================
         // SUPER ADMINS (máximo 2 según requerimiento)
         // =============================================
 
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000001',
+            'id' => 'dcf7d7df-62b8-4359-9d06-646d82a4e2ae',
             'company_id' => $systemCompanyId,
             'email' => 'superadmin@panelempresarial.com',
             'password' => Hash::make('SuperAdmin123!'),
@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000002',
+            'id' => '4b9e037f-116d-4507-9385-b09485a71fd3',
             'company_id' => $systemCompanyId,
             'email' => 'admin.sistema@panelempresarial.com',
             'password' => Hash::make('SuperAdmin123!'),
@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
 
         // Admin Primario de Empresa Demo (puede crear otros admins)
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000010',
+            'id' => '24bad944-81a7-47b2-b0a8-5163a157f3d2',
             'company_id' => $demoCompanyId,
             'email' => 'admin@empresademo.com',
             'password' => Hash::make('Admin123!'),
@@ -70,7 +70,7 @@ class UserSeeder extends Seeder
 
         // Admin Secundario de Empresa Demo
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000011',
+            'id' => '2c9eccd4-a4c4-4479-9ff4-eb307b1536f1',
             'company_id' => $demoCompanyId,
             'email' => 'admin2@empresademo.com',
             'password' => Hash::make('Admin123!'),
@@ -85,7 +85,7 @@ class UserSeeder extends Seeder
 
         // Usuarios normales de Empresa Demo
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000012',
+            'id' => '00fb2daf-9981-42ec-922d-84371d52be62',
             'company_id' => $demoCompanyId,
             'email' => 'juan.hernandez@empresademo.com',
             'password' => Hash::make('Usuario123!'),
@@ -99,7 +99,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000013',
+            'id' => '933a1c02-1cac-4aea-bad9-ae9183a9797a',
             'company_id' => $demoCompanyId,
             'email' => 'ana.martinez@empresademo.com',
             'password' => Hash::make('Usuario123!'),
@@ -118,7 +118,7 @@ class UserSeeder extends Seeder
 
         // Admin Primario de Tech Solutions
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000020',
+            'id' => 'fd7de8c6-bdb5-4e04-bb64-10d0b99a44b5',
             'company_id' => $techCompanyId,
             'email' => 'admin@techsolutions.mx',
             'password' => Hash::make('Admin123!'),
@@ -133,7 +133,7 @@ class UserSeeder extends Seeder
 
         // Usuario de Tech Solutions
         User::create([
-            'id' => 'u0000000-0000-0000-0000-000000000021',
+            'id' => '5a86323b-430a-494b-a050-15effcfe764e',
             'company_id' => $techCompanyId,
             'email' => 'developer@techsolutions.mx',
             'password' => Hash::make('Usuario123!'),

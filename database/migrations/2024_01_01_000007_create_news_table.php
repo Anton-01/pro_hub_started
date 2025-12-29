@@ -17,16 +17,17 @@ return new class extends Migration
             $table->uuid('company_id');
 
             // Contenido
-            $table->text('text');
+            $table->string('title', 255);
+            $table->text('content');
             $table->string('url', 500)->nullable();
 
             // Programación
-            $table->timestamp('starts_at')->useCurrent();
-            $table->timestamp('ends_at')->nullable();
+            $table->timestamp('published_at')->useCurrent();
+            $table->timestamp('expires_at')->nullable();
 
             // Orden y prioridad
-            $table->integer('sort_order')->default(0);
-            $table->boolean('is_priority')->default(false);
+            $table->integer('priority')->default(0);
+            $table->boolean('is_active')->default(true);
 
             // Metadatos
             $table->uuid('created_by')->nullable();
@@ -44,8 +45,9 @@ return new class extends Migration
                 ->onDelete('set null');
 
             $table->index('company_id');
-            $table->index('starts_at');
-            $table->index('ends_at');
+            $table->index('published_at');
+            $table->index('expires_at');
+            $table->index('is_active');
             $table->index('deleted_at');
         });
 

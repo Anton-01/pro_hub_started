@@ -39,12 +39,18 @@ return new class extends Migration
             $table->uuid('id')->primary()->default(DB::raw('uuid_generate_v4()'));
             $table->string('name', 255);
             $table->string('slug', 255)->unique();
+
+            $table->string('domain')->nullable()->unique(); // Para multi-tenant
+            $table->string('contact_email')->nullable();
+            $table->json('settings')->nullable();
+
             $table->string('tax_id', 50)->nullable(); // RFC en México
             $table->string('email', 255)->nullable();
             $table->string('phone', 50)->nullable();
             $table->text('address')->nullable();
             $table->string('website', 255)->nullable();
             $table->integer('max_admins')->default(5);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
 

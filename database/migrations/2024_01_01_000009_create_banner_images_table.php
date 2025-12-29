@@ -16,8 +16,13 @@ return new class extends Migration
             $table->uuid('id')->primary()->default(DB::raw('uuid_generate_v4()'));
             $table->uuid('company_id');
 
+            // Contenido
+            $table->string('title', 255)->nullable();
+            $table->text('description')->nullable();
+
             // Archivo
-            $table->string('url', 500);
+            $table->string('url', 500)->nullable();
+            $table->string('image_path', 500);
             $table->string('alt_text', 255)->nullable();
 
             // Metadatos de imagen
@@ -31,8 +36,9 @@ return new class extends Migration
             $table->string('link_url', 500)->nullable();
             $table->string('link_target', 20)->default('_self');
 
-            // Orden
-            $table->integer('sort_order')->default(0);
+            // Estado y Orden
+            $table->boolean('is_active')->default(true);
+            $table->integer('order')->default(0);
 
             // Metadatos
             $table->timestamps();
@@ -44,6 +50,7 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->index('company_id');
+            $table->index('is_active');
             $table->index('deleted_at');
         });
 

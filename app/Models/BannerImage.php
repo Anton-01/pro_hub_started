@@ -48,7 +48,7 @@ class BannerImage extends Model
         'height',
         'link_url',
         'link_target',
-        'sort_order',
+        'order',
         'status',
     ];
 
@@ -59,7 +59,7 @@ class BannerImage extends Model
         'file_size' => 'integer',
         'width' => 'integer',
         'height' => 'integer',
-        'sort_order' => 'integer',
+        'order' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -70,7 +70,7 @@ class BannerImage extends Model
      */
     protected $attributes = [
         'link_target' => '_self',
-        'sort_order' => 0,
+        'order' => 0,
         'status' => 'active',
     ];
 
@@ -127,10 +127,10 @@ class BannerImage extends Model
     }
 
     /**
-     * Scope para ordenar por sort_order
+     * Scope para ordenar por order
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order', 'asc');
+        return $query->orderBy('order', 'asc');
     }
 }

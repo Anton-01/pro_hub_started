@@ -139,16 +139,17 @@ return new class extends Migration
             SELECT
                 n.id,
                 n.company_id,
-                n.text,
+                n.title,
+                n.content,
                 n.url,
-                n.is_priority,
-                n.sort_order
+                n.priority,
+                n.is_active
             FROM news n
             WHERE n.deleted_at IS NULL
-              AND n.status = 'active'
-              AND (n.starts_at IS NULL OR n.starts_at <= CURRENT_TIMESTAMP)
-              AND (n.ends_at IS NULL OR n.ends_at >= CURRENT_TIMESTAMP)
-            ORDER BY n.is_priority DESC, n.sort_order ASC;
+              AND n.is_active = true
+              AND (n.published_at IS NULL OR n.published_at <= CURRENT_TIMESTAMP)
+              AND (n.expires_at IS NULL OR n.expires_at >= CURRENT_TIMESTAMP)
+            ORDER BY n.priority ASC;
         ");
 
         // Vista: Eventos del mes actual

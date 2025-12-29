@@ -96,16 +96,9 @@ class DashboardController extends Controller
             'total_contacts' => Contact::where('company_id', $companyId)->count(),
             'upcoming_events' => CalendarEvent::where('company_id', $companyId)
                 ->where('event_date', '>=', now())
-                ->count(),
-            'active_news' => News::where('company_id', $companyId)
+                ->count(), 'active_news' => News::where('company_id', $companyId)
                 ->where('status', 'active')
-                ->where(function ($q) {
-                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
-                })
-                ->where(function ($q) {
-                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
-                })
-                ->count(),
+                ->count()
         ];
 
         // Próximos eventos
@@ -131,8 +124,7 @@ class DashboardController extends Controller
         // Noticias activas
         $activeNews = News::where('company_id', $companyId)
             ->where('status', 'active')
-            ->orderBy('is_priority', 'desc')
-            ->orderBy('sort_order')
+            ->orderBy('priority', 'desc')
             ->take(5)
             ->get();
 

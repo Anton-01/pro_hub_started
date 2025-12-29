@@ -29,8 +29,9 @@ return new class extends Migration
             // Avatar
             $table->string('avatar_url', 500)->nullable();
 
-            // Orden
-            $table->integer('sort_order')->default(0);
+            // Estado y Orden
+            $table->boolean('is_active')->default(true);
+            $table->integer('order')->default(0);
 
             // Metadatos
             $table->timestamps();
@@ -43,6 +44,7 @@ return new class extends Migration
 
             $table->index('company_id');
             $table->index('department');
+            $table->index('is_active');
             $table->index('deleted_at');
         });
 

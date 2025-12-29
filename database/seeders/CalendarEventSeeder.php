@@ -13,7 +13,7 @@ class CalendarEventSeeder extends Seeder
      */
     public function run(): void
     {
-        $demoCompanyId = 'c0000000-0000-0000-0000-000000000001';
+        $demoCompanyId = 'bfbcb072-61ba-49bf-bc14-aeaace3778e4';
         $currentMonth = Carbon::now();
 
         $events = [

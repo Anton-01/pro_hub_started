@@ -40,7 +40,7 @@ return new class extends Migration
             $table->string('module_hover_color', 7)->default('#2548a8'); // Hover de módulos
 
             // Configuración adicional
-            $table->string('header_title', 255)->nullable();
+            $table->string('header_text', 255)->nullable();
             $table->string('footer_text', 500)->nullable();
             $table->boolean('show_calendar')->default(true);
             $table->boolean('show_news_ticker')->default(true);

@@ -10,8 +10,8 @@ use App\Events\UserRegistered;
 use App\Events\PasswordResetRequested;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Carbon\Carbon;
 
 class AuthService
@@ -33,8 +33,8 @@ class AuthService
 
     public function __construct()
     {
-        $this->accessTokenTtl = config('auth.jwt_ttl', 60); // 1 hora
-        $this->refreshTokenTtl = config('auth.jwt_refresh_ttl', 10080); // 7 días
+        $this->accessTokenTtl = config('jwt.ttl', 60); // 1 hora
+        $this->refreshTokenTtl = config('jwt.refresh_ttl', 20160); // 14 días
         $this->maxActiveSessions = config('auth.max_sessions', 5);
     }
 
@@ -104,15 +104,21 @@ class AuthService
     public function refreshToken(string $refreshToken): ?array
     {
         try {
-            $payload = JWT::decode(
-                $refreshToken,
-                new Key(config('app.key'), 'HS256')
-            );
+            // Decodificar el refresh token
+            JWTAuth::setToken($refreshToken);
+            $payload = JWTAuth::getPayload();
+
+            $sessionId = $payload->get('session_id');
+            $type = $payload->get('type');
+
+            // Verificar que es un refresh token
+            if ($type !== 'refresh') {
+                return null;
+            }
 
             $session = UserSession::with('user')
-                                   ->where('id', $payload->session_id)
-                                   ->active()
-                                   ->first();
+                                   ->where('id', $sessionId)
+                                   ->active()->first();
 
             if (!$session || !$session->user) {
                 return null;
@@ -123,7 +129,7 @@ class AuthService
                 'access_token' => $this->generateAccessToken($session->user, $session),
                 'expires_at' => Carbon::now()->addMinutes($this->accessTokenTtl),
             ];
-        } catch (\Exception $e) {
+        } catch (JWTException $e) {
             return null;
         }
     }
@@ -148,17 +154,14 @@ class AuthService
      */
     protected function generateAccessToken(User $user, UserSession $session): string
     {
-        $payload = [
-            'iss' => config('app.url'),
-            'sub' => $user->id,
-            'iat' => time(),
-            'exp' => Carbon::now()->addMinutes($this->accessTokenTtl)->timestamp,
+        $customClaims = [
             'session_id' => $session->id,
             'company_id' => $user->company_id,
             'role' => $user->role,
+            'type' => 'access',
         ];
 
-        return JWT::encode($payload, config('app.key'), 'HS256');
+        return JWTAuth::claims($customClaims)->fromUser($user);
     }
 
     /**
@@ -166,15 +169,14 @@ class AuthService
      */
     protected function generateRefreshToken(UserSession $session): string
     {
-        $payload = [
-            'iss' => config('app.url'),
-            'iat' => time(),
-            'exp' => Carbon::now()->addMinutes($this->refreshTokenTtl)->timestamp,
+        $customClaims = [
             'session_id' => $session->id,
             'type' => 'refresh',
+            'exp' => Carbon::now()->addMinutes($this->refreshTokenTtl)->timestamp,
         ];
 
-        return JWT::encode($payload, config('app.key'), 'HS256');
+        // Crear un token con claims personalizados para refresh
+        return JWTAuth::claims($customClaims)->fromUser($session->user);
     }
 
     /**
@@ -183,14 +185,20 @@ class AuthService
     public function validateToken(string $token): ?array
     {
         try {
-            $payload = JWT::decode(
-                $token,
-                new Key(config('app.key'), 'HS256')
-            );
+            JWTAuth::setToken($token);
+            $payload = JWTAuth::getPayload();
+
+            $sessionId = $payload->get('session_id');
+            $type = $payload->get('type');
+
+            // Verificar que es un access token
+            if ($type !== 'access') {
+                return null;
+            }
 
             // Verificar que la sesión sigue activa
             $session = UserSession::active()
-                                   ->where('id', $payload->session_id)
+                                   ->where('id', $sessionId)
                                    ->first();
 
             if (!$session) {
@@ -198,12 +206,12 @@ class AuthService
             }
 
             return [
-                'user_id' => $payload->sub,
-                'company_id' => $payload->company_id,
-                'role' => $payload->role,
-                'session_id' => $payload->session_id,
+                'user_id' => $payload->get('sub'),
+                'company_id' => $payload->get('company_id'),
+                'role' => $payload->get('role'),
+                'session_id' => $sessionId,
             ];
-        } catch (\Exception $e) {
+        } catch (JWTException $e) {
             return null;
         }
     }

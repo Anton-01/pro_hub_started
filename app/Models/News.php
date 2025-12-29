@@ -40,12 +40,13 @@ class News extends Model
      */
     protected $fillable = [
         'company_id',
-        'text',
+        'title',
+        'content',
         'url',
-        'starts_at',
-        'ends_at',
-        'sort_order',
-        'is_priority',
+        'published_at',
+        'expires_at',
+        'priority',
+        'is_active',
         'status',
         'created_by',
     ];
@@ -54,10 +55,10 @@ class News extends Model
      * Atributos que deben ser casteados
      */
     protected $casts = [
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
-        'sort_order' => 'integer',
-        'is_priority' => 'boolean',
+        'published_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'priority' => 'integer',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -67,8 +68,8 @@ class News extends Model
      * Valores por defecto para los atributos
      */
     protected $attributes = [
-        'sort_order' => 0,
-        'is_priority' => false,
+        'priority' => 0,
+        'is_active' => true,
         'status' => 'active',
     ];
 
@@ -99,11 +100,11 @@ class News extends Model
             return false;
         }
 
-        if ($this->starts_at && $this->starts_at->isFuture()) {
+        if ($this->published_at && $this->published_at->isFuture()) {
             return false;
         }
 
-        if ($this->ends_at && $this->ends_at->isPast()) {
+        if ($this->expires_at && $this->expires_at->isPast()) {
             return false;
         }
 
@@ -113,9 +114,9 @@ class News extends Model
     /**
      * Verificar si la noticia es prioritaria
      */
-    public function isPriority(): bool
+    public function isHighPriority(): bool
     {
-        return $this->is_priority;
+        return $this->priority <= 2;
     }
 
     /**
@@ -123,7 +124,8 @@ class News extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', 'active')
+            ->where('is_active', true);
     }
 
     /**
@@ -135,21 +137,21 @@ class News extends Model
 
         return $query->where('status', 'active')
                      ->where(function ($q) use ($now) {
-                         $q->whereNull('starts_at')
-                           ->orWhere('starts_at', '<=', $now);
+                         $q->whereNull('published_at')
+                           ->orWhere('published_at', '<=', $now);
                      })
                      ->where(function ($q) use ($now) {
-                         $q->whereNull('ends_at')
-                           ->orWhere('ends_at', '>=', $now);
+                         $q->whereNull('expires_at')
+                           ->orWhere('expires_at', '>=', $now);
                      });
     }
 
     /**
      * Scope para noticias prioritarias
      */
-    public function scopePriority($query)
+    public function scopeHighPriority($query)
     {
-        return $query->where('is_priority', true);
+        return $query->where('priority', '<=', 2);
     }
 
     /**
@@ -157,7 +159,6 @@ class News extends Model
      */
     public function scopeOrdered($query)
     {
-        return $query->orderByDesc('is_priority')
-                     ->orderBy('sort_order', 'asc');
+        return $query->orderBy('priority', 'asc');
     }
 }
