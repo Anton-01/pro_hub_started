@@ -54,14 +54,15 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table" data-sortable="{{ route('admin.news.reorder') }}">
+            <table class="table">
                 <thead>
                     <tr>
                         <th width="40"></th>
-                        <th>Texto</th>
+                        <th>Contenido</th>
                         <th>Enlace</th>
                         <th>Vigencia</th>
                         <th>Prioridad</th>
+                        <th>Creado por</th>
                         <th>Estado</th>
                         <th width="120">Acciones</th>
                     </tr>
@@ -73,7 +74,7 @@
                                 <i class="fas fa-grip-vertical text-muted drag-handle" style="cursor: grab;"></i>
                             </td>
                             <td>
-                                <div>{{ Str::limit($item->text, 80) }}</div>
+                                <div>{{ Str::limit($item->content, 80) }}</div>
                                 @if(!$item->isCurrentlyActive())
                                     <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>No visible actualmente</small>
                                 @endif
@@ -88,15 +89,15 @@
                                 @endif
                             </td>
                             <td class="small">
-                                @if($item->starts_at || $item->ends_at)
+                                @if($item->published_at || $item->expires_at)
                                     <div>
-                                        @if($item->starts_at)
-                                            <span class="text-muted">Desde:</span> {{ $item->starts_at->format('d/m/Y H:i') }}
+                                        @if($item->published_at)
+                                            <span class="text-muted">Desde:</span> {{ $item->published_at->format('d/m/Y H:i') }}
                                         @endif
                                     </div>
                                     <div>
-                                        @if($item->ends_at)
-                                            <span class="text-muted">Hasta:</span> {{ $item->ends_at->format('d/m/Y H:i') }}
+                                        @if($item->expires_at)
+                                            <span class="text-muted">Hasta:</span> {{ $item->expires_at->format('d/m/Y H:i') }}
                                         @endif
                                     </div>
                                 @else
@@ -104,10 +105,18 @@
                                 @endif
                             </td>
                             <td>
-                                @if($item->is_priority)
+                                @if($item->priority > 0)
                                     <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>Prioritaria</span>
                                 @else
                                     <span class="text-muted">Normal</span>
+                                @endif
+                            </td>
+                            <td class="small">
+                                @if($item->creator)
+                                    <div>{{ $item->creator->name }}</div>
+                                    <small class="text-muted">{{ $item->created_at->format('d/m/Y') }}</small>
+                                @else
+                                    <span class="text-muted">-</span>
                                 @endif
                             </td>
                             <td>

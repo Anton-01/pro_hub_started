@@ -133,17 +133,26 @@
                         @foreach($activeNews as $news)
                             <a href="{{ route('admin.news.edit', $news) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex align-items-start gap-2">
-                                    @if($news->is_priority)
-                                        <span class="badge bg-danger">Prioritaria</span>
+                                    @if($news->is_priority > 0)
+                                        <span class="badge bg-warning text-dark">Prioritaria</span>
                                     @endif
                                     <div class="flex-grow-1">
-                                        <p class="mb-1">{{ Str::limit($news->text, 100) }}</p>
-                                        @if($news->url)
-                                            <small class="text-muted">
-                                                <i class="fas fa-link me-1"></i>
-                                                {{ Str::limit($news->url, 40) }}
-                                            </small>
-                                        @endif
+                                        <p class="mb-1">{{ Str::limit($news->content, 100) }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            @if($news->url)
+                                                <small class="text-muted">
+                                                    <i class="fas fa-link me-1"></i>
+                                                    {{ Str::limit($news->url, 40) }}
+                                                </small>
+                                            @else
+                                                <span></span>
+                                            @endif
+                                            @if($news->creator)
+                                                <small class="text-muted">
+                                                    <i class="fas fa-user me-1"></i>{{ $news->creator->name }}
+                                                </small>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </a>

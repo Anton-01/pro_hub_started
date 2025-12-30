@@ -27,11 +27,11 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="text" class="form-label">Texto <span class="text-danger">*</span></label>
-                        <textarea class="form-control @error('text') is-invalid @enderror"
-                                  id="text" name="text" rows="3" required maxlength="500">{{ old('text') }}</textarea>
+                        <label for="content" class="form-label">Contenido <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('content') is-invalid @enderror"
+                                  id="content" name="content" rows="3" required maxlength="500">{{ old('content') }}</textarea>
                         <div class="form-text">Máximo 500 caracteres. Este texto aparecerá en el cintillo de noticias.</div>
-                        @error('text')
+                        @error('content')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -55,20 +55,19 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="starts_at" class="form-label">Mostrar desde</label>
-                            <input type="datetime-local" class="form-control @error('starts_at') is-invalid @enderror"
-                                   id="starts_at" name="starts_at" value="{{ old('starts_at') }}">
-                            <div class="form-text">Dejar vacío para mostrar inmediatamente.</div>
-                            @error('starts_at')
+                            <label for="published_at" class="form-label">Mostrar desde</label>
+                            <input type="datetime-local" class="form-control @error('published_at') is-invalid @enderror"
+                                   id="published_at" name="published_at" value="{{ old('published_at') }}">
+                            @error('published_at')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="ends_at" class="form-label">Mostrar hasta</label>
-                            <input type="datetime-local" class="form-control @error('ends_at') is-invalid @enderror"
-                                   id="ends_at" name="ends_at" value="{{ old('ends_at') }}">
+                            <label for="expires_at" class="form-label">Mostrar hasta</label>
+                            <input type="datetime-local" class="form-control @error('expires_at') is-invalid @enderror"
+                                   id="expires_at" name="expires_at" value="{{ old('expires_at') }}">
                             <div class="form-text">Dejar vacío para mostrar indefinidamente.</div>
-                            @error('ends_at')
+                            @error('expires_at')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -85,9 +84,9 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <div class="form-check form-switch">
-                            <input type="checkbox" class="form-check-input" id="is_priority" name="is_priority" value="1"
-                                   {{ old('is_priority') ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_priority">
+                            <input type="checkbox" class="form-check-input" id="priority" name="priority" value="1"
+                                {{ old('priority') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="priority">
                                 <i class="fas fa-star text-warning me-1"></i>Noticia Prioritaria
                             </label>
                         </div>

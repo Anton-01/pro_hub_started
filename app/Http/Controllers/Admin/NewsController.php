@@ -18,22 +18,25 @@ class NewsController extends Controller
      */
     public function index(Request $request)
     {
-        $query = News::where('company_id', $this->getCompanyId());
+        $query = News::where('company_id', $this->getCompanyId())->with('creator');
 
         if ($request->filled('search')) {
-            $query->where('text', 'ilike', "%{$request->search}%");
+            $query->where('content', 'ilike', "%{$request->search}%");
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->boolean('priority_only')) {
-            $query->where('is_priority', true);
+        if ($request->boolean('priority')) {
+            if ($request->priority == '1') {
+                $query->where('priority', '>', 0);
+            } else {
+                $query->where('priority', 0);
+            }
         }
 
-        $news = $query->orderBy('is_priority', 'desc')
-            ->orderBy('sort_order')
+        $news = $query->orderBy('priority', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
@@ -55,26 +58,24 @@ class NewsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'text' => 'required|string|max:500',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:500',
             'url' => 'nullable|url|max:500',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
-            'is_priority' => 'boolean',
+            'published_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after:starts_at',
+            'priority' => 'boolean',
             'status' => 'required|in:active,inactive',
         ]);
-
-        $lastOrder = News::where('company_id', $this->getCompanyId())
-            ->max('sort_order') ?? 0;
 
         News::create([
             'company_id' => $this->getCompanyId(),
             'created_by' => auth()->id(),
-            'text' => $validated['text'],
+            'title' => $validated['title'] ?? null,
+            'content' => $validated['content'],
             'url' => $validated['url'] ?? null,
-            'starts_at' => $validated['starts_at'] ?? null,
-            'ends_at' => $validated['ends_at'] ?? null,
-            'is_priority' => $request->boolean('is_priority'),
-            'sort_order' => $lastOrder + 1,
+            'published_at' => $validated['published_at'] ?? now(),
+            'expires_at' => $validated['expires_at'] ?? null,
+            'priority' => $request->boolean('priority') ? 1 : 0,
             'status' => $validated['status'],
         ]);
 
@@ -110,20 +111,22 @@ class NewsController extends Controller
         $this->authorizeAccess($news);
 
         $validated = $request->validate([
-            'text' => 'required|string|max:500',
+            'title' => 'nullable|string|max:255',
+            'content' => 'required|string|max:500',
             'url' => 'nullable|url|max:500',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
-            'is_priority' => 'boolean',
+            'published_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after:published_at',
+            'priority' => 'nullable|integer|min:0|max:10',
             'status' => 'required|in:active,inactive',
         ]);
 
         $news->update([
-            'text' => $validated['text'],
+            'title' => $validated['title'] ?? null,
+            'content' => $validated['content'],
             'url' => $validated['url'] ?? null,
-            'starts_at' => $validated['starts_at'] ?? null,
-            'ends_at' => $validated['ends_at'] ?? null,
-            'is_priority' => $request->boolean('is_priority'),
+            'published_at' => $validated['published_at'] ?? null,
+            'expires_at' => $validated['expires_at'] ?? null,
+            'priority' => $request->boolean('priority') ? 1 : 0,
             'status' => $validated['status'],
         ]);
 

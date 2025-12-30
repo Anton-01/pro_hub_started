@@ -21,7 +21,7 @@ class BannerImageController extends Controller
     public function index(Request $request)
     {
         $banners = BannerImage::where('company_id', $this->getCompanyId())
-            ->orderBy('sort_order')
+            ->orderBy('order')
             ->paginate(12);
 
         return view('admin.banners.index', compact('banners'));
@@ -57,7 +57,7 @@ class BannerImageController extends Controller
         $height = $image->height();
 
         $lastOrder = BannerImage::where('company_id', $this->getCompanyId())
-            ->max('sort_order') ?? 0;
+            ->max('order') ?? 0;
 
         BannerImage::create([
             'company_id' => $this->getCompanyId(),
@@ -70,7 +70,7 @@ class BannerImageController extends Controller
             'height' => $height,
             'link_url' => $validated['link_url'] ?? null,
             'link_target' => $validated['link_target'] ?? '_self',
-            'sort_order' => $lastOrder + 1,
+            'order' => $lastOrder + 1,
             'status' => $validated['status'],
         ]);
 
@@ -108,14 +108,14 @@ class BannerImageController extends Controller
     public function reorder(Request $request)
     {
         $request->validate([
-            'order' => 'required|array',
-            'order.*' => 'uuid|exists:banner_images,id',
+            'ids' => 'required|array',
+            'ids.*' => 'uuid|exists:banner_images,id',
         ]);
 
-        foreach ($request->order as $index => $id) {
+        foreach ($request->ids as $index => $id) {
             BannerImage::where('id', $id)
                 ->where('company_id', $this->getCompanyId())
-                ->update(['sort_order' => $index + 1]);
+                ->update(['order' => $index + 1]);
         }
 
         return response()->json(['success' => true]);

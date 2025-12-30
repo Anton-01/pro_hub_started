@@ -95,10 +95,9 @@ class DashboardController extends Controller
             'active_modules' => Module::where('company_id', $companyId)->where('status', 'active')->count(),
             'total_contacts' => Contact::where('company_id', $companyId)->count(),
             'upcoming_events' => CalendarEvent::where('company_id', $companyId)
-                ->where('event_date', '>=', now())
-                ->count(), 'active_news' => News::where('company_id', $companyId)
-                ->where('status', 'active')
-                ->count()
+                ->where('event_date', '>=', now())->count(),
+            'active_news' => News::where('company_id', $companyId)
+                ->where('status', 'active')->count()
         ];
 
         // Próximos eventos
@@ -123,10 +122,9 @@ class DashboardController extends Controller
 
         // Noticias activas
         $activeNews = News::where('company_id', $companyId)
-            ->where('status', 'active')
+            ->where('status', 'active') ->with('creator')
             ->orderBy('priority', 'desc')
-            ->take(5)
-            ->get();
+            ->take(5)->get();
 
         return view('admin.dashboard.admin', compact(
             'stats',
