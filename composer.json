@@ -12,6 +12,8 @@
         "laravel/horizon": "^5.41",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
+        "maatwebsite/excel": "^3.1",
+        "mckenziearts/laravel-notify": "^3.1",
         "nuwave/lighthouse": "^6.64",
         "php-open-source-saver/jwt-auth": "*",
         "predis/predis": "^3.3"

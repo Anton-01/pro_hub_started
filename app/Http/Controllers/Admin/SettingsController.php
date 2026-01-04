@@ -45,7 +45,8 @@ class SettingsController extends Controller
 
         $this->getCompany()->update($validated);
 
-        return back()->with('success', 'Información general actualizada.');
+        notify()->success('Información general actualizada.', 'Éxito');
+        return back();
     }
 
     /**
@@ -77,7 +78,8 @@ class SettingsController extends Controller
 
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Configuración de branding actualizada.');
+        notify()->success('Configuración de branding actualizada.', 'Éxito');
+        return back();
     }
 
     /**
@@ -103,7 +105,8 @@ class SettingsController extends Controller
 
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Tema de colores actualizado.');
+        notify()->success('Tema de colores actualizado.', 'Éxito');
+        return back();
     }
 
     /**
@@ -138,7 +141,8 @@ class SettingsController extends Controller
 
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Logo actualizado correctamente.');
+        notify()->success('Logo actualizado correctamente.', 'Éxito');
+        return back();
     }
 
     /**
@@ -162,7 +166,8 @@ class SettingsController extends Controller
 
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Logo eliminado.');
+        notify()->success('Logo eliminado.', 'Éxito');
+        return back();
     }
 
     /**
@@ -185,7 +190,8 @@ class SettingsController extends Controller
 
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Favicon actualizado.');
+        notify()->success('Favicon actualizado.', 'Éxito');
+        return back();
     }
 
     /**
@@ -209,7 +215,8 @@ class SettingsController extends Controller
 
         $cacheSettings->update($validated);
 
-        return back()->with('success', 'Configuración de cache actualizada.');
+        notify()->success('Configuración de cache actualizada.', 'Éxito');
+        return back();
     }
 
     /**
@@ -219,7 +226,8 @@ class SettingsController extends Controller
     {
         $this->clearCompanyCache();
 
-        return back()->with('success', 'Cache limpiado correctamente.');
+        notify()->success('Cache limpiado correctamente.', 'Éxito');
+        return back();
     }
 
     /**

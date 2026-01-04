@@ -95,11 +95,20 @@ Route::middleware('admin')->group(function () {
     Route::patch('modules/{module}/toggle-status', [ModuleController::class, 'toggleStatus'])
         ->name('modules.toggle-status');
 
+    // Módulos por defecto (plantillas)
+    Route::get('modules-defaults', [ModuleController::class, 'showDefaults'])->name('modules.defaults');
+    Route::post('modules-defaults/apply', [ModuleController::class, 'applyDefaults'])->name('modules.defaults.apply');
+
     // Contactos / Directorio
     Route::resource('contacts', ContactController::class);
     Route::post('contacts/reorder', [ContactController::class, 'reorder'])->name('contacts.reorder');
     Route::patch('contacts/{contact}/toggle-status', [ContactController::class, 'toggleStatus'])
         ->name('contacts.toggle-status');
+
+    // Importación masiva de contactos
+    Route::get('contacts-import', [ContactController::class, 'importView'])->name('contacts.import');
+    Route::post('contacts-import', [ContactController::class, 'import'])->name('contacts.import.process');
+    Route::get('contacts-template', [ContactController::class, 'downloadTemplate'])->name('contacts.template');
 
     // Eventos de calendario
     Route::resource('events', CalendarEventController::class);
@@ -112,7 +121,7 @@ Route::middleware('admin')->group(function () {
         ->name('news.toggle-status');
 
     // Imágenes del banner/carrusel
-    Route::resource('banners', BannerImageController::class)->except(['edit', 'update']);
+    Route::resource('banners', BannerImageController::class);
     Route::post('banners/reorder', [BannerImageController::class, 'reorder'])->name('banners.reorder');
     Route::patch('banners/{banner}/toggle-status', [BannerImageController::class, 'toggleStatus'])
         ->name('banners.toggle-status');

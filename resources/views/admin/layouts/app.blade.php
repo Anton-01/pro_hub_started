@@ -15,7 +15,11 @@
     <!-- Styles -->
     @vite(['resources/sass/admin.scss', 'resources/js/admin.js'])
 
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
     @stack('styles')
+    @notifyCss
 </head>
 <body>
     <div class="admin-wrapper">
@@ -50,6 +54,13 @@
 
     {{-- Toast Container --}}
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Laravel Notify -->
+    <x-notify::notify />
+    @notifyJs
 
     @stack('modals')
     @stack('scripts')

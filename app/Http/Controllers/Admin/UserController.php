@@ -275,12 +275,14 @@ class UserController extends Controller
 
         // No permitir eliminar al admin primario
         if ($user->is_primary_admin) {
-            return back()->with('error', 'No puedes eliminar al administrador primario de la empresa.');
+            notify()->error('No puedes eliminar al administrador primario de la empresa.', 'Error');
+            return back();
         }
 
         // No permitir auto-eliminación
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'No puedes eliminarte a ti mismo.');
+            notify()->error('No puedes eliminarte a ti mismo.', 'Error');
+            return back();
         }
 
         $user->delete();
@@ -297,13 +299,15 @@ class UserController extends Controller
         $this->authorizeUserAccess($user);
 
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'No puedes desactivarte a ti mismo.');
+            notify()->error('No puedes desactivarte a ti mismo.', 'Error');
+            return back();
         }
 
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado del usuario actualizado.');
+        notify()->success('Estado del usuario actualizado.', 'Éxito');
+        return back();
     }
 
     /**
@@ -330,7 +334,8 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return back()->with('success', 'Perfil actualizado correctamente.');
+        notify()->success('Perfil actualizado correctamente.', 'Éxito');
+        return back();
     }
 
     /**
@@ -347,7 +352,8 @@ class UserController extends Controller
             'password' => $validated['password'],
         ]);
 
-        return back()->with('success', 'Contraseña actualizada correctamente.');
+        notify()->success('Contraseña actualizada correctamente.', 'Éxito');
+        return back();
     }
 
     /**
@@ -370,7 +376,8 @@ class UserController extends Controller
 
         $user->update(['avatar_url' => $path]);
 
-        return back()->with('success', 'Avatar actualizado correctamente.');
+        notify()->success('Avatar actualizado correctamente.', 'Éxito');
+        return back();
     }
 
     /**

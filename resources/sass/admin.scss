@@ -3,7 +3,7 @@
 // ===========================================
 
 // Variables personalizadas
-$primary: #4c78dd;
+$primary: #6BA3FF;
 $secondary: #6c757d;
 $success: #46c37b;
 $info: #70b9eb;
@@ -118,7 +118,7 @@ body {
                 width: 32px;
                 height: 32px;
                 background: $primary;
-                border-radius: 8px;
+                border-radius: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -148,7 +148,7 @@ body {
                 align-items: center;
                 padding: 0.65rem 1rem;
                 color: $sidebar-color;
-                border-radius: 6px;
+                border-radius: 8px;
                 transition: all 0.2s ease;
                 gap: 0.75rem;
 
@@ -343,8 +343,8 @@ body.sidebar-mini {
             .dropdown-menu {
                 min-width: 200px;
                 border: none;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+                border-radius: 10px;
                 padding: 0.5rem;
 
                 .dropdown-item {
@@ -417,8 +417,8 @@ body.sidebar-mini {
 
 .card {
     border: none;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-bottom: 1.5rem;
 
     .card-header {
@@ -448,17 +448,17 @@ body.sidebar-mini {
 // Stats cards
 .stats-card {
     background: #fff;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
     .stats-icon {
         width: 56px;
         height: 56px;
-        border-radius: 10px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -576,16 +576,23 @@ body.sidebar-mini {
 .btn {
     font-weight: 500;
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.875rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
 
     &-primary {
         background: $primary;
         border-color: $primary;
 
         &:hover {
-            background: darken($primary, 5%);
-            border-color: darken($primary, 5%);
+            background: darken($primary, 8%);
+            border-color: darken($primary, 8%);
         }
     }
 
@@ -665,8 +672,9 @@ body.sidebar-mini {
 
 .alert {
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 1rem 1.25rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 
     &-success {
         background: rgba($success, 0.1);
@@ -698,12 +706,13 @@ body.sidebar-mini {
 
     .page-link {
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 0.5rem 0.875rem;
         color: $dark;
 
         &:hover {
             background: $light;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
     }
 
@@ -732,8 +741,8 @@ body.sidebar-mini {
 
 .auth-card {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     width: 100%;
     max-width: 420px;
     padding: 2.5rem;
@@ -746,13 +755,14 @@ body.sidebar-mini {
             width: 64px;
             height: 64px;
             background: $primary;
-            border-radius: 16px;
+            border-radius: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #fff;
             font-size: 1.75rem;
             margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba($primary, 0.3);
         }
 
         h1 {
@@ -868,3 +878,60 @@ body.sidebar-mini {
 .fade-leave-to {
     opacity: 0;
 }
+
+// ===========================================
+// Laravel Notify - Custom Styles
+// ===========================================
+
+// Asegurar que las notificaciones tengan z-index alto
+.notify {
+    z-index: 9999 !important;
+    position: fixed !important;
+
+    // Mejorar la visibilidad
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    animation: slideInRight 0.3s ease-out !important;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+// ===========================================
+// SweetAlert2 - Custom Styles
+// ===========================================
+
+.swal2-popup {
+    font-family: $font-family-sans-serif !important;
+    border-radius: 12px !important;
+}
+
+.swal2-title {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    color: $dark !important;
+}
+
+.swal2-html-container {
+    color: $secondary !important;
+}
+
+.swal2-confirm {
+    border-radius: 6px !important;
+    padding: 0.625rem 1.25rem !important;
+    font-weight: 500 !important;
+}
+
+.swal2-cancel {
+    border-radius: 6px !important;
+    padding: 0.625rem 1.25rem !important;
+    font-weight: 500 !important;
+}
+

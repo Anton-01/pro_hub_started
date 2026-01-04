@@ -21,12 +21,11 @@ class NewsRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'text' => ['required', 'string', 'min:5'],
-            'url' => ['nullable', 'url', 'max:500'],
-            'starts_at' => ['nullable', 'date'],
-            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'is_priority' => ['nullable', 'boolean'],
+            'content' => 'required|string|max:500',
+            'url' => 'nullable|url|max:500',
+            'published_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'priority' => ['nullable', 'boolean'],
             'status' => [Rule::in(['active', 'inactive', 'pending', 'suspended'])],
         ];
 

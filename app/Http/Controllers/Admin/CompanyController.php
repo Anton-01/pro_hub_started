@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CompanyRequest;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class CompanyController extends Controller
 {
@@ -50,24 +50,9 @@ class CompanyController extends Controller
     /**
      * Guardar nueva empresa
      */
-    public function store(Request $request)
+    public function store(CompanyRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:100|unique:companies,slug',
-            'tax_id' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string|max:500',
-            'website' => 'nullable|url|max:255',
-            'max_admins' => 'nullable|integer|min:1|max:10',
-            'status' => 'required|in:active,inactive,pending',
-            // Datos del admin primario
-            'admin_name' => 'required|string|max:255',
-            'admin_last_name' => 'nullable|string|max:255',
-            'admin_email' => 'required|email|max:255',
-            'admin_password' => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         // Generar slug si no se proporciona
         if (empty($validated['slug'])) {
@@ -130,19 +115,9 @@ class CompanyController extends Controller
     /**
      * Actualizar empresa
      */
-    public function update(Request $request, Company $company)
+    public function update(CompanyRequest $request, Company $company)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => ['nullable', 'string', 'max:100', Rule::unique('companies')->ignore($company->id)],
-            'tax_id' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string|max:500',
-            'website' => 'nullable|url|max:255',
-            'max_admins' => 'nullable|integer|min:1|max:10',
-            'status' => 'required|in:active,inactive,pending,suspended',
-        ]);
+        $validated = $request->validated();
 
         $company->update($validated);
 
@@ -157,7 +132,8 @@ class CompanyController extends Controller
     {
         // Verificar que no sea la única empresa
         if (Company::count() <= 1) {
-            return back()->with('error', 'No puedes eliminar la única empresa del sistema.');
+            notify()->error('No puedes eliminar la única empresa del sistema.', 'Error');
+            return back();
         }
 
         $company->delete();
@@ -174,6 +150,7 @@ class CompanyController extends Controller
         $newStatus = $company->status === 'active' ? 'inactive' : 'active';
         $company->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado de la empresa actualizado.');
+        notify()->success('Estado de la empresa actualizado.', 'Éxito');
+        return back();
     }
 }

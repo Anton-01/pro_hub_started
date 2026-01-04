@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CalendarEventRequest;
 use App\Models\CalendarEvent;
 use Illuminate\Http\Request;
 
@@ -54,22 +55,9 @@ class CalendarEventController extends Controller
     /**
      * Guardar nuevo evento
      */
-    public function store(Request $request)
+    public function store(CalendarEventRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'content' => 'nullable|string',
-            'event_date' => 'required|date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'is_all_day' => 'boolean',
-            'is_recurring' => 'boolean',
-            'recurrence_rule' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:20',
-            'icon' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         CalendarEvent::create([
             'company_id' => $this->getCompanyId(),
@@ -115,24 +103,11 @@ class CalendarEventController extends Controller
     /**
      * Actualizar evento
      */
-    public function update(Request $request, CalendarEvent $event)
+    public function update(CalendarEventRequest $request, CalendarEvent $event)
     {
         $this->authorizeAccess($event);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'content' => 'nullable|string',
-            'event_date' => 'required|date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'is_all_day' => 'boolean',
-            'is_recurring' => 'boolean',
-            'recurrence_rule' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:20',
-            'icon' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         $event->update([
             'title' => $validated['title'],
@@ -176,7 +151,8 @@ class CalendarEventController extends Controller
         $newStatus = $event->status === 'active' ? 'inactive' : 'active';
         $event->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado del evento actualizado.');
+        notify()->success('Estado del evento actualizado.', 'Éxito');
+        return back();
     }
 
     private function authorizeAccess(CalendarEvent $event): void

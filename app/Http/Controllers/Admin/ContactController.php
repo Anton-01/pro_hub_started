@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ContactRequest;
+use App\Imports\ContactsImport;
+use App\Exports\ContactsTemplateExport;
 use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
+use PhpOffice\PhpSpreadsheet\Writer\Exception;
 
 class ContactController extends Controller
 {
@@ -40,7 +46,7 @@ class ContactController extends Controller
             $query->where('status', $request->status);
         }
 
-        $contacts = $query->orderBy('sort_order')
+        $contacts = $query->orderBy('order')
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -69,24 +75,14 @@ class ContactController extends Controller
 
     /**
      * Guardar nuevo contacto
+     * @throws InvalidNotificationException
      */
-    public function store(Request $request)
+    public function store(ContactRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'extension' => 'nullable|string|max:20',
-            'mobile' => 'nullable|string|max:50',
-            'avatar' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         $lastOrder = Contact::where('company_id', $this->getCompanyId())
-            ->max('sort_order') ?? 0;
+            ->max('order') ?? 0;
 
         $avatarUrl = null;
         if ($request->hasFile('avatar')) {
@@ -104,12 +100,12 @@ class ContactController extends Controller
             'extension' => $validated['extension'] ?? null,
             'mobile' => $validated['mobile'] ?? null,
             'avatar_url' => $avatarUrl,
-            'sort_order' => $lastOrder + 1,
+            'order' => $lastOrder + 1,
             'status' => $validated['status'],
         ]);
 
-        return redirect()->route('admin.contacts.index')
-            ->with('success', 'Contacto creado correctamente.');
+        notify()->success()->message('Contacto creado correctamente.')->send();
+        return redirect()->route('admin.contacts.index');
     }
 
     /**
@@ -140,22 +136,11 @@ class ContactController extends Controller
     /**
      * Actualizar contacto
      */
-    public function update(Request $request, Contact $contact)
+    public function update(ContactRequest $request, Contact $contact)
     {
         $this->authorizeAccess($contact);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'extension' => 'nullable|string|max:20',
-            'mobile' => 'nullable|string|max:50',
-            'avatar' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         $updateData = [
             'name' => $validated['name'],
@@ -178,8 +163,8 @@ class ContactController extends Controller
 
         $contact->update($updateData);
 
-        return redirect()->route('admin.contacts.index')
-            ->with('success', 'Contacto actualizado correctamente.');
+        notify()->success()->message('Contacto actualizado correctamente.')->send();
+        return redirect()->route('admin.contacts.index');
     }
 
     /**
@@ -228,7 +213,65 @@ class ContactController extends Controller
         $newStatus = $contact->status === 'active' ? 'inactive' : 'active';
         $contact->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado del contacto actualizado.');
+        notify()->success('Estado del contacto actualizado.', 'Éxito');
+        return back();
+    }
+
+    /**
+     * Descargar plantilla Excel para importación
+     * @throws InvalidNotificationException
+     */
+    public function downloadTemplate()
+    {
+        try {
+            return Excel::download(new ContactsTemplateExport(), 'planting_contacts.xlsx');
+        } catch (Exception|\PhpOffice\PhpSpreadsheet\Exception $e) {
+            notify()->error()->message('Error al generar el archivo temporal.')->send();
+            return back();
+        }
+    }
+
+    /**
+     * Mostrar vista de importación
+     */
+    public function importView()
+    {
+        return view('admin.contacts.import');
+    }
+
+    /**
+     * Procesar importación de contactos desde Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240', // 10MB máximo
+        ], [
+            'file.required' => 'Debes seleccionar un archivo.',
+            'file.mimes' => 'El archivo debe ser un Excel (.xlsx, .xls) o CSV.',
+            'file.max' => 'El archivo no puede exceder 10MB.',
+        ]);
+
+        try {
+            $import = new ContactsImport($this->getCompanyId());
+
+            Excel::import($import, $request->file('file'));
+
+            $summary = $import->getSummary();
+            $errors = $import->getErrors();
+
+            if ($errors) {
+                return redirect()->route('admin.contacts.import')
+                    ->with('import_summary', $summary)
+                    ->with('import_errors', $errors)
+                    ->with('warning', "Importación completada con errores: {$summary['success']} creados, {$summary['updated']} actualizados, {$summary['errors']} errores.");
+            }
+            notify()->success()->message("Importación exitosa: {$summary['success']} contactos creados, {$summary['updated']} actualizados.")->send();
+            return redirect()->route('admin.contacts.index');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.contacts.import')
+                ->with('error', 'Error al procesar el archivo: ' . $e->getMessage());
+        }
     }
 
     private function authorizeAccess(Contact $contact): void

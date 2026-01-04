@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BannerImageRequest;
 use App\Models\BannerImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -38,15 +39,9 @@ class BannerImageController extends Controller
     /**
      * Guardar nueva imagen
      */
-    public function store(Request $request)
+    public function store(BannerImageRequest $request)
     {
-        $validated = $request->validate([
-            'image' => 'required|image|max:5120', // 5MB máximo
-            'alt_text' => 'nullable|string|max:255',
-            'link_url' => 'nullable|url|max:500',
-            'link_target' => 'nullable|in:_self,_blank',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         $file = $request->file('image');
         $path = $file->store('banners', 'public');
@@ -74,8 +69,8 @@ class BannerImageController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return redirect()->route('admin.banners.index')
-            ->with('success', 'Imagen subida correctamente.');
+        notify()->success('Imagen subida correctamente', 'Éxito');
+        return redirect()->route('admin.banners.index');
     }
 
     /**
@@ -89,6 +84,66 @@ class BannerImageController extends Controller
     }
 
     /**
+     * Mostrar formulario de edición
+     */
+    public function edit(BannerImage $banner)
+    {
+        $this->authorizeAccess($banner);
+
+        return view('admin.banners.edit', compact('banner'));
+    }
+
+    /**
+     * Actualizar imagen
+     */
+    public function update(Request $request, BannerImage $banner)
+    {
+        $this->authorizeAccess($banner);
+
+        $validated = $request->validate([
+            'image' => 'nullable|image|max:5120', // 5MB máximo
+            'alt_text' => 'nullable|string|max:255',
+            'link_url' => 'nullable|url|max:500',
+            'link_target' => 'nullable|in:_self,_blank',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        // Si se sube una nueva imagen
+        if ($request->hasFile('image')) {
+            // Eliminar la imagen anterior
+            Storage::disk('public')->delete($banner->url);
+
+            $file = $request->file('image');
+            $path = $file->store('banners', 'public');
+
+            // Obtener dimensiones de la imagen
+            $image = Image::read(Storage::disk('public')->path($path));
+            $width = $image->width();
+            $height = $image->height();
+
+            $banner->update([
+                'url' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'width' => $width,
+                'height' => $height,
+            ]);
+        }
+
+        // Actualizar los demás campos
+        $banner->update([
+            'alt_text' => $validated['alt_text'] ?? null,
+            'link_url' => $validated['link_url'] ?? null,
+            'link_target' => $validated['link_target'] ?? '_self',
+            'status' => $validated['status'],
+        ]);
+
+        notify()->success('Banner actualizado correctamente', 'Éxito');
+        return redirect()->route('admin.banners.index');
+    }
+
+    /**
      * Eliminar imagen
      */
     public function destroy(BannerImage $banner)
@@ -98,8 +153,8 @@ class BannerImageController extends Controller
         Storage::disk('public')->delete($banner->url);
         $banner->delete();
 
-        return redirect()->route('admin.banners.index')
-            ->with('success', 'Imagen eliminada correctamente.');
+        notify()->success('Imagen eliminada correctamente', 'Éxito');
+        return redirect()->route('admin.banners.index');
     }
 
     /**
@@ -131,7 +186,8 @@ class BannerImageController extends Controller
         $newStatus = $banner->status === 'active' ? 'inactive' : 'active';
         $banner->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado de la imagen actualizado.');
+        notify()->success('Estado de la imagen actualizado', 'Éxito');
+        return back();
     }
 
     private function authorizeAccess(BannerImage $banner): void

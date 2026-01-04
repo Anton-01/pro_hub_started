@@ -16,6 +16,9 @@
         <a href="{{ route('admin.contacts.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Nuevo Contacto
         </a>
+        <a href="{{ route('admin.contacts.import') }}" class="btn btn-success">
+            <i class="fas fa-file-excel me-2"></i>Importar
+        </a>
     </div>
 @endsection
 
@@ -127,9 +130,14 @@
                                     <i class="fas fa-address-book"></i>
                                     <h5>No hay contactos</h5>
                                     <p>Agrega contactos al directorio de tu empresa.</p>
-                                    <a href="{{ route('admin.contacts.create') }}" class="btn btn-primary">
-                                        <i class="fas fa-plus me-2"></i>Nuevo Contacto
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ route('admin.contacts.import') }}" class="btn btn-success">
+                                            <i class="fas fa-file-excel me-2"></i>Importar
+                                        </a>
+                                        <a href="{{ route('admin.contacts.create') }}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-2"></i>Nuevo Contacto
+                                        </a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

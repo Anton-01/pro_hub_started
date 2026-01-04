@@ -84,15 +84,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===========================================
-// Confirm Delete
+// Confirm Delete with SweetAlert2
 // ===========================================
 
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-confirm]').forEach(function(element) {
         element.addEventListener('click', function(e) {
-            if (!confirm(this.dataset.confirm || '¿Estás seguro de que deseas eliminar este elemento?')) {
-                e.preventDefault();
-            }
+            e.preventDefault();
+
+            const message = this.dataset.confirm || '¿Estás seguro de que deseas eliminar este elemento?';
+            const confirmButtonText = this.dataset.confirmButton || 'Sí, eliminar';
+            const cancelButtonText = this.dataset.cancelButton || 'Cancelar';
+            const confirmButtonColor = this.dataset.confirmColor || '#dc3545';
+            const form = this.closest('form');
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: confirmButtonText,
+                cancelButtonText: cancelButtonText,
+                reverseButtons: true,
+                focusCancel: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (form) {
+                        form.submit();
+                    }
+                }
+            });
         });
     });
 });

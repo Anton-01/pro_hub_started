@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\News;
 use Illuminate\Http\Request;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class NewsController extends Controller
 {
@@ -54,11 +55,11 @@ class NewsController extends Controller
 
     /**
      * Guardar nueva noticia
+     * @throws InvalidNotificationException
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
             'content' => 'required|string|max:500',
             'url' => 'nullable|url|max:500',
             'published_at' => 'nullable|date',
@@ -70,7 +71,7 @@ class NewsController extends Controller
         News::create([
             'company_id' => $this->getCompanyId(),
             'created_by' => auth()->id(),
-            'title' => $validated['title'] ?? null,
+            'title' => $validated['content'],
             'content' => $validated['content'],
             'url' => $validated['url'] ?? null,
             'published_at' => $validated['published_at'] ?? now(),
@@ -79,8 +80,8 @@ class NewsController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return redirect()->route('admin.news.index')
-            ->with('success', 'Noticia creada correctamente.');
+        notify()->success()->message('Noticia creada correctamente.')->send();
+        return redirect()->route('admin.news.index');
     }
 
     /**
@@ -111,7 +112,6 @@ class NewsController extends Controller
         $this->authorizeAccess($news);
 
         $validated = $request->validate([
-            'title' => 'nullable|string|max:255',
             'content' => 'required|string|max:500',
             'url' => 'nullable|url|max:500',
             'published_at' => 'nullable|date',
@@ -121,7 +121,7 @@ class NewsController extends Controller
         ]);
 
         $news->update([
-            'title' => $validated['title'] ?? null,
+            'title' => $validated['content'],
             'content' => $validated['content'],
             'url' => $validated['url'] ?? null,
             'published_at' => $validated['published_at'] ?? null,
@@ -130,8 +130,8 @@ class NewsController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return redirect()->route('admin.news.index')
-            ->with('success', 'Noticia actualizada correctamente.');
+        notify()->success()->message('Noticia actualizada correctamente.')->send();
+        return redirect()->route('admin.news.index');
     }
 
     /**
@@ -149,6 +149,7 @@ class NewsController extends Controller
 
     /**
      * Cambiar estado
+     * @throws InvalidNotificationException
      */
     public function toggleStatus(News $news)
     {
@@ -157,7 +158,8 @@ class NewsController extends Controller
         $newStatus = $news->status === 'active' ? 'inactive' : 'active';
         $news->update(['status' => $newStatus]);
 
-        return back()->with('success', 'Estado de la noticia actualizado.');
+        notify()->success('Estado de la noticia actualizado.', 'Éxito')->send();
+        return back();
     }
 
     private function authorizeAccess(News $news): void
