@@ -275,6 +275,34 @@ class ModuleController extends Controller
     }
 
     /**
+     * Obtener módulos por defecto para API (usado en crear módulo)
+     */
+    public function getDefaultModules()
+    {
+        $defaultModules = DefaultModule::active()
+            ->ordered()
+            ->get()
+            ->map(function ($module) {
+                return [
+                    'id' => $module->id,
+                    'label' => $module->label,
+                    'description' => $module->description,
+                    'type' => $module->type,
+                    'url' => $module->url,
+                    'target' => $module->target,
+                    'icon' => $module->icon,
+                    'background_color' => $module->background_color,
+                    'group_name' => $module->group_name,
+                    'category' => $module->category,
+                    'system_name' => $module->system_name,
+                ];
+            })
+            ->groupBy('category');
+
+        return response()->json($defaultModules);
+    }
+
+    /**
      * Verificar acceso
      */
     private function authorizeAccess(Module $module): void

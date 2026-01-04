@@ -98,6 +98,7 @@ Route::middleware('admin')->group(function () {
     // Módulos por defecto (plantillas)
     Route::get('modules-defaults', [ModuleController::class, 'showDefaults'])->name('modules.defaults');
     Route::post('modules-defaults/apply', [ModuleController::class, 'applyDefaults'])->name('modules.defaults.apply');
+    Route::get('modules-defaults/api', [ModuleController::class, 'getDefaultModules'])->name('modules.defaults.api');
 
     // Contactos / Directorio
     Route::resource('contacts', ContactController::class);
