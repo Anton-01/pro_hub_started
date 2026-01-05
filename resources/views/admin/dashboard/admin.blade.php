@@ -192,17 +192,14 @@
                                     </div>
 
                                     {{-- Actions --}}
-                                    <div class="d-flex gap-1 align-items-start">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <label class="status-toggle" data-toggle-url="{{ route('admin.news.toggle-status', $news) }}" title="Clic para desactivar">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-switch"></span>
+                                        </label>
                                         <a href="{{ route('admin.news.edit', $news) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('admin.news.toggle-status', $news) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Desactivar">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
                             </div>

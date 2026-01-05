@@ -64,7 +64,7 @@
                         <th>Prioridad</th>
                         <th>Creado por</th>
                         <th>Estado</th>
-                        <th width="150">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,22 +120,16 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $item->status }}">
-                                    {{ ucfirst($item->status) }}
-                                </span>
+                                <label class="status-toggle" data-toggle-url="{{ route('admin.news.toggle-status', $item) }}" title="{{ $item->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                    <input type="checkbox" {{ $item->status == 'active' ? 'checked' : '' }}>
+                                    <span class="toggle-switch"></span>
+                                </label>
                             </td>
                             <td>
                                 <div class="table-actions">
                                     <a href="{{ route('admin.news.edit', $item) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('admin.news.toggle-status', $item) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-outline-{{ $item->status == 'active' ? 'warning' : 'success' }}" title="{{ $item->status == 'active' ? 'Desactivar' : 'Activar' }}">
-                                            <i class="fas fa-{{ $item->status == 'active' ? 'ban' : 'check' }}"></i>
-                                        </button>
-                                    </form>
                                     <form action="{{ route('admin.news.destroy', $item) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

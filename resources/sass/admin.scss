@@ -999,3 +999,106 @@ body.sidebar-mini {
     font-weight: 500 !important;
 }
 
+// ===========================================
+// Status Toggle Switch
+// ===========================================
+
+.status-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+
+    input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: rgba($danger, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: $danger;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    input:checked + .toggle-switch {
+        background: rgba($success, 0.2);
+
+        &::before {
+            transform: translateX(20px);
+            background: $success;
+        }
+    }
+
+    // Loading state
+    &.loading {
+        pointer-events: none;
+
+        .toggle-switch {
+            opacity: 0.6;
+
+            &::before {
+                animation: togglePulse 0.8s ease-in-out infinite;
+            }
+        }
+    }
+
+    // Hover effect
+    &:hover:not(.loading) {
+        .toggle-switch {
+            box-shadow: 0 0 0 3px rgba($secondary, 0.1);
+        }
+    }
+
+    // Focus state
+    input:focus + .toggle-switch {
+        box-shadow: 0 0 0 3px rgba($primary, 0.2);
+    }
+}
+
+@keyframes togglePulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+}
+
+// Status toggle checked animation
+@keyframes toggleSuccess {
+    0% {
+        transform: translateX(20px) scale(1);
+    }
+    50% {
+        transform: translateX(20px) scale(1.1);
+    }
+    100% {
+        transform: translateX(20px) scale(1);
+    }
+}
+
+.status-toggle input:checked + .toggle-switch::before {
+    animation: toggleSuccess 0.3s ease-out;
+}
+

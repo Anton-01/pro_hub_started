@@ -84,7 +84,7 @@
                         <th>Rol</th>
                         <th>Estado</th>
                         <th>Último acceso</th>
-                        <th width="150">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,9 +121,16 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $user->status }}">
-                                    {{ ucfirst($user->status) }}
-                                </span>
+                                @if($user->id !== auth()->id() && !$user->is_primary_admin)
+                                    <label class="status-toggle" data-toggle-url="{{ route('admin.users.toggle-status', $user) }}" title="{{ $user->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                        <input type="checkbox" {{ $user->status == 'active' ? 'checked' : '' }}>
+                                        <span class="toggle-switch"></span>
+                                    </label>
+                                @else
+                                    <span class="badge badge-status-{{ $user->status }}">
+                                        {{ ucfirst($user->status) }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="small text-muted">
                                 {{ $user->last_login_at?->diffForHumans() ?? 'Nunca' }}
@@ -134,13 +141,6 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     @if($user->id !== auth()->id() && !$user->is_primary_admin)
-                                        <form action="{{ route('admin.users.toggle-status', $user) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-outline-{{ $user->status == 'active' ? 'warning' : 'success' }}" title="{{ $user->status == 'active' ? 'Desactivar' : 'Activar' }}">
-                                                <i class="fas fa-{{ $user->status == 'active' ? 'ban' : 'check' }}"></i>
-                                            </button>
-                                        </form>
                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
