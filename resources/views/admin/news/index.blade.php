@@ -64,7 +64,7 @@
                         <th>Prioridad</th>
                         <th>Creado por</th>
                         <th>Estado</th>
-                        <th width="120">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,9 +120,10 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $item->status }}">
-                                    {{ ucfirst($item->status) }}
-                                </span>
+                                <label class="status-toggle" data-toggle-url="{{ route('admin.news.toggle-status', $item) }}" title="{{ $item->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                    <input type="checkbox" {{ $item->status == 'active' ? 'checked' : '' }}>
+                                    <span class="toggle-switch"></span>
+                                </label>
                             </td>
                             <td>
                                 <div class="table-actions">

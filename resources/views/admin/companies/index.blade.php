@@ -85,9 +85,10 @@
                                 <span class="badge bg-light text-dark">{{ $company->modules_count }}</span>
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $company->status }}">
-                                    {{ ucfirst($company->status) }}
-                                </span>
+                                <label class="status-toggle" data-toggle-url="{{ route('admin.companies.toggle-status', $company) }}" title="{{ $company->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                    <input type="checkbox" {{ $company->status == 'active' ? 'checked' : '' }}>
+                                    <span class="toggle-switch"></span>
+                                </label>
                             </td>
                             <td class="small text-muted">
                                 {{ $company->created_at->format('d/m/Y') }}

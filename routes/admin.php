@@ -118,8 +118,7 @@ Route::middleware('admin')->group(function () {
 
     // Noticias / News Ticker
     Route::resource('news', NewsController::class);
-    Route::patch('news/{news}/toggle-status', [NewsController::class, 'toggleStatus'])
-        ->name('news.toggle-status');
+    Route::patch('news/{news}/toggle-status', [NewsController::class, 'toggleStatus'])->name('news.toggle-status');
 
     // Imágenes del banner/carrusel
     Route::resource('banners', BannerImageController::class);

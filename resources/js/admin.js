@@ -326,4 +326,63 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// ===========================================
+// Status Toggle Switch (AJAX)
+// ===========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.status-toggle[data-toggle-url]').forEach(function(toggle) {
+        const input = toggle.querySelector('input[type="checkbox"]');
+        const url = toggle.dataset.toggleUrl;
+
+        if (!input || !url) return;
+
+        input.addEventListener('change', function(e) {
+            e.preventDefault();
+
+            // Add loading state
+            toggle.classList.add('loading');
+
+            // Store original state in case we need to revert
+            const originalChecked = !input.checked;
+
+            // Make AJAX request
+            axios.patch(url)
+                .then(function(response) {
+                    // Remove loading state
+                    toggle.classList.remove('loading');
+
+                    // Update badge if exists in the same row
+                    const row = toggle.closest('tr') || toggle.closest('.list-group-item') || toggle.closest('.card');
+                    if (row) {
+                        const badge = row.querySelector('.badge-status-active, .badge-status-inactive');
+                        if (badge) {
+                            const newStatus = input.checked ? 'active' : 'inactive';
+                            badge.className = badge.className.replace(/badge-status-\w+/, 'badge-status-' + newStatus);
+                            badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        }
+                    }
+
+                    // Show success notification
+                    const statusText = input.checked ? 'activado' : 'desactivado';
+                    showToast(`Estado ${statusText} correctamente`, 'success');
+                })
+                .catch(function(error) {
+                    // Remove loading state
+                    toggle.classList.remove('loading');
+
+                    // Revert the checkbox state
+                    input.checked = originalChecked;
+
+                    // Show error notification
+                    let errorMessage = 'Error al cambiar el estado';
+                    if (error.response && error.response.data && error.response.data.message) {
+                        errorMessage = error.response.data.message;
+                    }
+                    showToast(errorMessage, 'danger');
+                });
+        });
+    });
+});
+
 console.log('Admin panel initialized');

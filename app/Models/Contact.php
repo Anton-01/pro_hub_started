@@ -50,6 +50,7 @@ class Contact extends Model
         'avatar_url',
         'order',
         'status',
+        'is_active',
     ];
 
     /**

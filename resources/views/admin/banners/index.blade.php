@@ -56,9 +56,12 @@
                                 <div class="banner-overlay">
                                     <i class="fas fa-grip-lines drag-handle" style="cursor: grab;"></i>
                                 </div>
-                                <span class="badge badge-status-{{ $banner->status }} position-absolute" style="top: 10px; right: 10px;">
-                                    {{ ucfirst($banner->status) }}
-                                </span>
+                                <div class="position-absolute" style="top: 10px; right: 10px;">
+                                    <label class="status-toggle" data-toggle-url="{{ route('admin.banners.toggle-status', $banner) }}" title="{{ $banner->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                        <input type="checkbox" {{ $banner->status == 'active' ? 'checked' : '' }}>
+                                        <span class="toggle-switch"></span>
+                                    </label>
+                                </div>
                             </div>
                             <div class="card-body p-2">
                                 <div class="small text-muted mb-1">

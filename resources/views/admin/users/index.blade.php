@@ -84,7 +84,7 @@
                         <th>Rol</th>
                         <th>Estado</th>
                         <th>Último acceso</th>
-                        <th width="120">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,9 +121,16 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $user->status }}">
-                                    {{ ucfirst($user->status) }}
-                                </span>
+                                @if($user->id !== auth()->id() && !$user->is_primary_admin)
+                                    <label class="status-toggle" data-toggle-url="{{ route('admin.users.toggle-status', $user) }}" title="{{ $user->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                        <input type="checkbox" {{ $user->status == 'active' ? 'checked' : '' }}>
+                                        <span class="toggle-switch"></span>
+                                    </label>
+                                @else
+                                    <span class="badge badge-status-{{ $user->status }}">
+                                        {{ ucfirst($user->status) }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="small text-muted">
                                 {{ $user->last_login_at?->diffForHumans() ?? 'Nunca' }}

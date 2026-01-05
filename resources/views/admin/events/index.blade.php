@@ -74,7 +74,7 @@
                         <th>Horario</th>
                         <th>Color</th>
                         <th>Estado</th>
-                        <th width="120">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,9 +114,10 @@
                                 <span class="color-preview" style="background-color: {{ $event->color }};"></span>
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $event->status }}">
-                                    {{ ucfirst($event->status) }}
-                                </span>
+                                <label class="status-toggle" data-toggle-url="{{ route('admin.events.toggle-status', $event) }}" title="{{ $event->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                    <input type="checkbox" {{ $event->status == 'active' ? 'checked' : '' }}>
+                                    <span class="toggle-switch"></span>
+                                </label>
                             </td>
                             <td>
                                 <div class="table-actions">

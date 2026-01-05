@@ -72,7 +72,7 @@
                         <th>Departamento</th>
                         <th>Contacto</th>
                         <th>Estado</th>
-                        <th width="120">Acciones</th>
+                        <th width="100">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,15 +108,23 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge badge-status-{{ $contact->status }}">
-                                    {{ ucfirst($contact->status) }}
-                                </span>
+                                <label class="status-toggle" data-toggle-url="{{ route('admin.contacts.toggle-status', $contact) }}" title="{{ $contact->status == 'active' ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                    <input type="checkbox" {{ $contact->status == 'active' ? 'checked' : '' }}>
+                                    <span class="toggle-switch"></span>
+                                </label>
                             </td>
                             <td>
                                 <div class="table-actions">
                                     <a href="{{ route('admin.contacts.edit', $contact) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <form action="{{ route('admin.contacts.toggle-status', $contact) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-outline-{{ $contact->status == 'active' ? 'warning' : 'success' }}" title="{{ $contact->status == 'active' ? 'Desactivar' : 'Activar' }}">
+                                            <i class="fas fa-{{ $contact->status == 'active' ? 'ban' : 'check' }}"></i>
+                                        </button>
+                                    </form>
                                     <form action="{{ route('admin.contacts.destroy', $contact) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
