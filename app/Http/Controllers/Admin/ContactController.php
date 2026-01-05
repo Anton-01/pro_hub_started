@@ -197,7 +197,7 @@ class ContactController extends Controller
         foreach ($request->order as $index => $id) {
             Contact::where('id', $id)
                 ->where('company_id', $this->getCompanyId())
-                ->update(['sort_order' => $index + 1]);
+                ->update(['order' => $index + 1]);
         }
 
         return response()->json(['success' => true]);

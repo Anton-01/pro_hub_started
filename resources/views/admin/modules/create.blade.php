@@ -16,6 +16,38 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-8">
+        {{-- Selector de Plantillas Predefinidas --}}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-magic me-2"></i>Cargar desde Plantilla
+                </div>
+                <span class="badge bg-info">Opcional</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Selecciona una plantilla para rellenar automáticamente los campos del formulario.
+                </p>
+                <div class="row">
+                    <div class="col-md-5 mb-2 mb-md-0">
+                        <select class="form-select form-select-sm" id="templateCategory">
+                            <option value="">-- Selecciona categoría --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5 mb-2 mb-md-0">
+                        <select class="form-select form-select-sm" id="templateModule" disabled>
+                            <option value="">-- Selecciona módulo --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary w-100" id="applyTemplateBtn" disabled>
+                            <i class="fas fa-check me-1"></i>Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <form action="{{ route('admin.modules.store') }}" method="POST">
             @csrf
 
@@ -135,8 +167,94 @@
 
 @push('scripts')
 <script>
-document.getElementById('background_color').addEventListener('input', function() {
-    document.getElementById('color_text').value = this.value;
-});
+    // Color picker sync
+    document.getElementById('background_color').addEventListener('input', function() {
+        document.getElementById('color_text').value = this.value;
+    });
+
+    // Template loader functionality
+    (function() {
+        const categorySelect = document.getElementById('templateCategory');
+        const moduleSelect = document.getElementById('templateModule');
+        const applyBtn = document.getElementById('applyTemplateBtn');
+        let templatesData = {};
+        // Category labels
+        const categoryLabels = {
+            'erp': 'ERP - Sistemas Empresariales',
+            'crm': 'CRM - Gestión de Clientes',
+            'hr': 'Recursos Humanos',
+            'accounting': 'Contabilidad y Finanzas',
+            'project_management': 'Gestión de Proyectos',
+            'communication': 'Comunicación'
+        };
+        // Load templates on page load
+        axios.get('{{ route("admin.modules.defaults.api") }}')
+            .then(function(response) {
+                templatesData = response.data;
+                // Populate category dropdown
+                Object.keys(templatesData).forEach(function(category) {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+                    categorySelect.appendChild(option);
+                });
+            })
+            .catch(function(error) {
+                console.error('Error loading templates:', error);
+            });
+        // Handle category change
+        categorySelect.addEventListener('change', function() {
+            const category = this.value;
+            moduleSelect.innerHTML = '<option value="">-- Selecciona módulo --</option>';
+            if (category && templatesData[category]) {
+                moduleSelect.disabled = false;
+                templatesData[category].forEach(function(module) {
+                    const option = document.createElement('option');
+                    option.value = module.id;
+                    option.textContent = module.label;
+                    option.dataset.module = JSON.stringify(module);
+                    moduleSelect.appendChild(option);
+                });
+            } else {
+                moduleSelect.disabled = true;
+                applyBtn.disabled = true;
+            }
+        });
+        // Handle module selection
+        moduleSelect.addEventListener('change', function() {
+            applyBtn.disabled = !this.value;
+        });
+        // Apply template
+        applyBtn.addEventListener('click', function() {
+            const selectedOption = moduleSelect.options[moduleSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.dataset.module) return;
+            const module = JSON.parse(selectedOption.dataset.module);
+            // Fill form fields
+            document.getElementById('label').value = module.label || '';
+            document.getElementById('description').value = module.description || '';
+            document.getElementById('type').value = module.type || 'external';
+            document.getElementById('url').value = module.url || '';
+            document.getElementById('target').value = module.target || '_blank';
+            document.getElementById('icon').value = module.icon || '';
+            document.getElementById('group_name').value = module.group_name || '';
+            if (module.background_color) {
+                document.getElementById('background_color').value = module.background_color;
+                document.getElementById('color_text').value = module.background_color;
+            }
+            // Show success feedback
+            Swal.fire({
+                title: '¡Plantilla aplicada!',
+                text: 'Los campos han sido rellenados con los datos de "' + module.label + '"',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            // Scroll to form
+            document.querySelector('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    })();
 </script>
 @endpush

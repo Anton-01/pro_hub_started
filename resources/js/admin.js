@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const confirmButtonText = this.dataset.confirmButton || 'Sí, eliminar';
             const cancelButtonText = this.dataset.cancelButton || 'Cancelar';
             const confirmButtonColor = this.dataset.confirmColor || '#dc3545';
+            const successMessage = this.dataset.successMessage || 'El elemento ha sido eliminado correctamente.';
             const form = this.closest('form');
 
             Swal.fire({
@@ -110,10 +111,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 reverseButtons: true,
                 focusCancel: true
             }).then((result) => {
-                if (result.isConfirmed) {
-                    if (form) {
-                        form.submit();
-                    }
+                if (result.isConfirmed && form) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Eliminando...',
+                        text: 'Por favor espera',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Send request via AJAX
+                    const formData = new FormData(form);
+                    axios.post(form.action, formData)
+                        .then(function(response) {
+                            Swal.fire({
+                                title: '¡Eliminado!',
+                                text: successMessage,
+                                icon: 'success',
+                                confirmButtonColor: '#46c37b',
+                                confirmButtonText: 'Aceptar',
+                                timer: 2000,
+                                timerProgressBar: true
+                            }).then(() => {
+                                // Reload page or remove row
+                                const row = form.closest('tr');
+                                if (row) {
+                                    row.style.transition = 'opacity 0.3s ease';
+                                    row.style.opacity = '0';
+                                    setTimeout(() => {
+                                        row.remove();
+                                        // Check if table is now empty
+                                        const tbody = document.querySelector('table tbody');
+                                        if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                                            window.location.reload();
+                                        }
+                                    }, 300);
+                                } else {
+                                    window.location.reload();
+                                }
+                            });
+                        })
+                        .catch(function(error) {
+                            let errorMessage = 'No se pudo eliminar el elemento.';
+                            if (error.response && error.response.data && error.response.data.message) {
+                                errorMessage = error.response.data.message;
+                            }
+                            Swal.fire({
+                                title: 'Error',
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonColor: '#d26a5c',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        });
                 }
             });
         });

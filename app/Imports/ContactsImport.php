@@ -32,14 +32,17 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsOnFailure, Wi
     public function collection(Collection $rows)
     {
         $lastOrder = Contact::where('company_id', $this->companyId)
-            ->max('sort_order') ?? 0;
+            ->max('order') ?? 0;
 
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2; // +2 porque Excel empieza en 1 y tiene header
 
             try {
+                // Convertir todos los valores a string para evitar problemas de tipo
+                $rowData = $this->normalizeRowData($row->toArray());
+
                 // Validar la fila
-                $validator = $this->validateRow($row->toArray(), $rowNumber);
+                $validator = $this->validateRow($rowData, $rowNumber);
 
                 if ($validator->fails()) {
                     $this->errorCount++;
@@ -52,13 +55,13 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsOnFailure, Wi
 
                 // Verificar si el contacto ya existe (por email)
                 $existingContact = null;
-                if (!empty($row['email'])) {
+                if (!empty($rowData['email'])) {
                     $existingContact = Contact::where('company_id', $this->companyId)
-                        ->where('email', $row['email'])
+                        ->where('email', $rowData['email'])
                         ->first();
                 }
 
-                $contactData = $this->prepareContactData($row);
+                $contactData = $this->prepareContactData($rowData);
 
                 if ($existingContact) {
                     // Actualizar contacto existente
@@ -84,26 +87,58 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsOnFailure, Wi
     }
 
     /**
+     * Normaliza los datos de la fila (convierte todo a string y limpia espacios)
+     */
+    private function normalizeRowData(array $row): array
+    {
+        $normalized = [];
+        foreach ($row as $key => $value) {
+            // Convertir a string y limpiar espacios
+            if ($value === null || $value === '') {
+                $normalized[$key] = null;
+            } else {
+                $normalized[$key] = trim((string) $value);
+            }
+        }
+        return $normalized;
+    }
+
+    /**
      * Valida una fila del Excel
      */
     private function validateRow(array $row, int $rowNumber): \Illuminate\Validation\Validator
     {
         return Validator::make($row, [
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'nullable|string|max:255',
-            'departamento' => 'nullable|string|max:255',
-            'cargo' => 'nullable|string|max:255',
+            'nombre' => 'required|max:255',
+            'apellido' => 'nullable|max:255',
+            'departamento' => 'nullable|max:255',
+            'cargo' => 'nullable|max:255',
             'email' => 'nullable|email|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'extension' => 'nullable|string|max:20',
-            'movil' => 'nullable|string|max:50',
+            'telefono' => 'nullable|max:50',
+            'extension' => 'nullable|max:20',
+            'movil' => 'nullable|max:50',
             'estado' => 'nullable|in:activo,inactivo,active,inactive',
         ], [
-            'nombre.required' => 'El nombre es obligatorio en la fila ' . $rowNumber,
-            'nombre.max' => 'El nombre es demasiado largo en la fila ' . $rowNumber,
-            'email.email' => 'El email no es válido en la fila ' . $rowNumber,
-            'email.max' => 'El email es demasiado largo en la fila ' . $rowNumber,
-            'estado.in' => 'El estado debe ser "activo" o "inactivo" en la fila ' . $rowNumber,
+            // Nombre
+            'nombre.required' => 'El campo "Nombre" es obligatorio',
+            'nombre.max' => 'El campo "Nombre" no puede tener más de 255 caracteres',
+            // Apellido
+            'apellido.max' => 'El campo "Apellido" no puede tener más de 255 caracteres',
+            // Departamento
+            'departamento.max' => 'El campo "Departamento" no puede tener más de 255 caracteres',
+            // Cargo
+            'cargo.max' => 'El campo "Cargo" no puede tener más de 255 caracteres',
+            // Email
+            'email.email' => 'El campo "Email" debe ser una dirección de correo válida',
+            'email.max' => 'El campo "Email" no puede tener más de 255 caracteres',
+            // Teléfono
+            'telefono.max' => 'El campo "Teléfono" no puede tener más de 50 caracteres',
+            // Extensión
+            'extension.max' => 'El campo "Extensión" no puede tener más de 20 caracteres',
+            // Móvil
+            'movil.max' => 'El campo "Móvil" no puede tener más de 50 caracteres',
+            // Estado
+            'estado.in' => 'El campo "Estado" debe ser: activo o inactivo',
         ]);
     }
 

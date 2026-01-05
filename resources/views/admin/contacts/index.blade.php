@@ -13,12 +13,16 @@
                 </ol>
             </nav>
         </div>
-        <a href="{{ route('admin.contacts.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Nuevo Contacto
-        </a>
-        <a href="{{ route('admin.contacts.import') }}" class="btn btn-success">
-            <i class="fas fa-file-excel me-2"></i>Importar
-        </a>
+
+        <div>
+            <a href="{{ route('admin.contacts.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuevo Contacto
+            </a>
+            <a href="{{ route('admin.contacts.import') }}" class="btn btn-success">
+                <i class="fas fa-file-excel me-2"></i>Importar
+            </a>
+        </div>
+
     </div>
 @endsection
 

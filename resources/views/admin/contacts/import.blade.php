@@ -185,7 +185,68 @@
             </div>
         </div>
     </div>
+
+    {{-- Import Overlay --}}
+    <div class="import-overlay" id="importOverlay">
+        <div class="spinner-grow text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <div class="spinner-grow text-primary" role="status" style="animation-delay: 0.15s;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <div class="spinner-grow text-primary" role="status" style="animation-delay: 0.3s;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <div class="import-progress-text" id="progressText">Leyendo archivo...</div>
+        <div class="import-progress-subtext">Por favor no cierres esta ventana<span class="import-progress-dots"></span></div>
+    </div>
 @endsection
+
+@push('styles')
+    <style>
+        .import-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 31, 44, 0.9);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .import-overlay.show {
+            display: flex;
+        }
+        .import-overlay .spinner-grow {
+            width: 3rem;
+            height: 3rem;
+        }
+        .import-progress-text {
+            color: #fff;
+            margin-top: 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+        .import-progress-subtext {
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .import-progress-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+    </style>
+@endpush
 
 @push('scripts')
     <script>
@@ -201,15 +262,64 @@
                 const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
                 fileSize.textContent = sizeInMB + ' MB';
                 fileInfo.style.display = 'block';
+
+                // Validar tipo de archivo
+                const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+                const validExtensions = ['.xlsx', '.xls', '.csv'];
+                const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (!validExtensions.includes(fileExtension)) {
+                    Swal.fire({
+                        title: 'Formato no válido',
+                        text: 'Por favor selecciona un archivo Excel (.xlsx, .xls) o CSV.',
+                        icon: 'error',
+                        confirmButtonColor: '#d26a5c'
+                    });
+                    fileInput.value = '';
+                    fileInfo.style.display = 'none';
+                }
             } else {
                 fileInfo.style.display = 'none';
             }
         });
-        // Mostrar spinner al enviar el formulario
+
+        // Mostrar overlay al enviar el formulario
         document.getElementById('importForm').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Archivo requerido',
+                    text: 'Por favor selecciona un archivo Excel para importar.',
+                    icon: 'warning',
+                    confirmButtonColor: '#6BA3FF'
+                });
+                return false;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...';
+
+            // Show overlay
+            const overlay = document.getElementById('importOverlay');
+            overlay.classList.add('show');
+
+            // Update progress messages
+            const progressText = document.getElementById('progressText');
+            const messages = [
+                'Leyendo archivo...',
+                'Validando datos...',
+                'Procesando contactos...',
+                'Guardando en base de datos...',
+                'Finalizando importación...'
+            ];
+            let currentMessage = 0;
+            setInterval(function() {
+                if (currentMessage < messages.length - 1) {
+                    currentMessage++;
+                    progressText.textContent = messages[currentMessage];
+                }
+            }, 2000);
         });
     </script>
 @endpush
