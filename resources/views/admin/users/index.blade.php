@@ -84,7 +84,7 @@
                         <th>Rol</th>
                         <th>Estado</th>
                         <th>Último acceso</th>
-                        <th width="120">Acciones</th>
+                        <th width="150">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,6 +134,13 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     @if($user->id !== auth()->id() && !$user->is_primary_admin)
+                                        <form action="{{ route('admin.users.toggle-status', $user) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-outline-{{ $user->status == 'active' ? 'warning' : 'success' }}" title="{{ $user->status == 'active' ? 'Desactivar' : 'Activar' }}">
+                                                <i class="fas fa-{{ $user->status == 'active' ? 'ban' : 'check' }}"></i>
+                                            </button>
+                                        </form>
                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')

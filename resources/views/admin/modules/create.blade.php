@@ -167,17 +167,18 @@
 
 @push('scripts')
 <script>
-    // Color picker sync
-    document.getElementById('background_color').addEventListener('input', function() {
-        document.getElementById('color_text').value = this.value;
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Color picker sync
+        document.getElementById('background_color').addEventListener('input', function() {
+            document.getElementById('color_text').value = this.value;
+        });
 
-    // Template loader functionality
-    (function() {
+        // Template loader functionality
         const categorySelect = document.getElementById('templateCategory');
         const moduleSelect = document.getElementById('templateModule');
         const applyBtn = document.getElementById('applyTemplateBtn');
         let templatesData = {};
+
         // Category labels
         const categoryLabels = {
             'erp': 'ERP - Sistemas Empresariales',
@@ -187,21 +188,34 @@
             'project_management': 'Gestión de Proyectos',
             'communication': 'Comunicación'
         };
-        // Load templates on page load
-        axios.get('{{ route("admin.modules.defaults.api") }}')
-            .then(function(response) {
-                templatesData = response.data;
-                // Populate category dropdown
-                Object.keys(templatesData).forEach(function(category) {
-                    const option = document.createElement('option');
-                    option.value = category;
-                    option.textContent = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
-                    categorySelect.appendChild(option);
+
+        // Function to load templates
+        function loadTemplates() {
+            if (typeof window.axios === 'undefined') {
+                // If axios is not available yet, retry after a short delay
+                setTimeout(loadTemplates, 100);
+                return;
+            }
+
+            window.axios.get('{{ route("admin.modules.defaults.api") }}')
+                .then(function(response) {
+                    templatesData = response.data;
+                    // Populate category dropdown
+                    Object.keys(templatesData).forEach(function(category) {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+                        categorySelect.appendChild(option);
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Error loading templates:', error);
                 });
-            })
-            .catch(function(error) {
-                console.error('Error loading templates:', error);
-            });
+        }
+
+        // Load templates
+        loadTemplates();
+
         // Handle category change
         categorySelect.addEventListener('change', function() {
             const category = this.value;
@@ -220,15 +234,18 @@
                 applyBtn.disabled = true;
             }
         });
+
         // Handle module selection
         moduleSelect.addEventListener('change', function() {
             applyBtn.disabled = !this.value;
         });
+
         // Apply template
         applyBtn.addEventListener('click', function() {
             const selectedOption = moduleSelect.options[moduleSelect.selectedIndex];
             if (!selectedOption || !selectedOption.dataset.module) return;
             const module = JSON.parse(selectedOption.dataset.module);
+
             // Fill form fields
             document.getElementById('label').value = module.label || '';
             document.getElementById('description').value = module.description || '';
@@ -237,10 +254,12 @@
             document.getElementById('target').value = module.target || '_blank';
             document.getElementById('icon').value = module.icon || '';
             document.getElementById('group_name').value = module.group_name || '';
+
             if (module.background_color) {
                 document.getElementById('background_color').value = module.background_color;
                 document.getElementById('color_text').value = module.background_color;
             }
+
             // Show success feedback
             Swal.fire({
                 title: '¡Plantilla aplicada!',
@@ -252,9 +271,10 @@
                 timer: 3000,
                 timerProgressBar: true
             });
+
             // Scroll to form
             document.querySelector('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-    })();
+    });
 </script>
 @endpush

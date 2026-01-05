@@ -72,7 +72,7 @@
                         <th>Departamento</th>
                         <th>Contacto</th>
                         <th>Estado</th>
-                        <th width="120">Acciones</th>
+                        <th width="150">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,6 +117,13 @@
                                     <a href="{{ route('admin.contacts.edit', $contact) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <form action="{{ route('admin.contacts.toggle-status', $contact) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-outline-{{ $contact->status == 'active' ? 'warning' : 'success' }}" title="{{ $contact->status == 'active' ? 'Desactivar' : 'Activar' }}">
+                                            <i class="fas fa-{{ $contact->status == 'active' ? 'ban' : 'check' }}"></i>
+                                        </button>
+                                    </form>
                                     <form action="{{ route('admin.contacts.destroy', $contact) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

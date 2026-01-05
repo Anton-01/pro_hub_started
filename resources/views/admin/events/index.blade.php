@@ -74,7 +74,7 @@
                         <th>Horario</th>
                         <th>Color</th>
                         <th>Estado</th>
-                        <th width="120">Acciones</th>
+                        <th width="150">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -123,6 +123,13 @@
                                     <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <form action="{{ route('admin.events.toggle-status', $event) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-outline-{{ $event->status == 'active' ? 'warning' : 'success' }}" title="{{ $event->status == 'active' ? 'Desactivar' : 'Activar' }}">
+                                            <i class="fas fa-{{ $event->status == 'active' ? 'ban' : 'check' }}"></i>
+                                        </button>
+                                    </form>
                                     <form action="{{ route('admin.events.destroy', $event) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

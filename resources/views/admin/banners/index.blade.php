@@ -76,6 +76,13 @@
                                         <a href="{{ route('admin.banners.edit', $banner) }}" class="btn btn-outline-secondary" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <form action="{{ route('admin.banners.toggle-status', $banner) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-outline-{{ $banner->status == 'active' ? 'warning' : 'success' }}" title="{{ $banner->status == 'active' ? 'Desactivar' : 'Activar' }}">
+                                                <i class="fas fa-{{ $banner->status == 'active' ? 'ban' : 'check' }}"></i>
+                                            </button>
+                                        </form>
                                         <form action="{{ route('admin.banners.destroy', $banner) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
