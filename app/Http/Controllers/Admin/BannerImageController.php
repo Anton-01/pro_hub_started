@@ -7,7 +7,6 @@ use App\Http\Requests\BannerImageRequest;
 use App\Models\BannerImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
 
 class BannerImageController extends Controller
 {
@@ -47,9 +46,8 @@ class BannerImageController extends Controller
         $path = $file->store('banners', 'public');
 
         // Obtener dimensiones de la imagen
-        $image = Image::read(Storage::disk('public')->path($path));
-        $width = $image->width();
-        $height = $image->height();
+        $imagePath = Storage::disk('public')->path($path);
+        [$width, $height] = getimagesize($imagePath);
 
         $lastOrder = BannerImage::where('company_id', $this->getCompanyId())
             ->max('order') ?? 0;
@@ -117,9 +115,8 @@ class BannerImageController extends Controller
             $path = $file->store('banners', 'public');
 
             // Obtener dimensiones de la imagen
-            $image = Image::read(Storage::disk('public')->path($path));
-            $width = $image->width();
-            $height = $image->height();
+            $imagePath = Storage::disk('public')->path($path);
+            [$width, $height] = getimagesize($imagePath);
 
             $banner->update([
                 'url' => $path,
