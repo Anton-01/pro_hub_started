@@ -179,12 +179,21 @@ class BannerImageController extends Controller
     /**
      * Cambiar estado
      */
-    public function toggleStatus(BannerImage $banner)
+    public function toggleStatus(Request $request, BannerImage $banner)
     {
         $this->authorizeAccess($banner);
 
         $newStatus = $banner->status === 'active' ? 'inactive' : 'active';
         $banner->update(['status' => $newStatus]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success('Estado de la imagen actualizado', 'Éxito');
         return back();

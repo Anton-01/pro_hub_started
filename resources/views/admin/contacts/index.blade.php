@@ -112,6 +112,7 @@
                                     <input type="checkbox" {{ $contact->status == 'active' ? 'checked' : '' }}>
                                     <span class="toggle-switch"></span>
                                 </label>
+                                <small class="status-text d-block text-muted" style="font-size: 0.7rem; margin-top: 2px;">{{ $contact->status == 'active' ? 'Activo' : 'Inactivo' }}</small>
                             </td>
                             <td>
                                 <div class="table-actions">

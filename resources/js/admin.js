@@ -354,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Update badge if exists in the same row
                     const row = toggle.closest('tr') || toggle.closest('.list-group-item') || toggle.closest('.card');
+                    const cell = toggle.closest('td');
                     if (row) {
                         const badge = row.querySelector('.badge-status-active, .badge-status-inactive');
                         if (badge) {
@@ -362,6 +363,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                         }
                     }
+
+                    // Update status text label if exists
+                    const statusTextEl = cell ? cell.querySelector('.status-text') : null;
+                    if (statusTextEl) {
+                        statusTextEl.textContent = input.checked ? 'Activo' : 'Inactivo';
+                    }
+
+                    // Update tooltip
+                    toggle.title = input.checked ? 'Clic para desactivar' : 'Clic para activar';
 
                     // Show success notification
                     const statusText = input.checked ? 'activado' : 'desactivado';

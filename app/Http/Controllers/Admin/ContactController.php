@@ -207,7 +207,7 @@ class ContactController extends Controller
      * Cambiar estado
      * @throws InvalidNotificationException
      */
-    public function toggleStatus(Contact $contact)
+    public function toggleStatus(Request $request, Contact $contact)
     {
         $this->authorizeAccess($contact);
 
@@ -215,6 +215,15 @@ class ContactController extends Controller
         $newIsActive = !($contact->is_active === true);
 
         $contact->update(['status' => $newStatus, 'is_active' => $newIsActive]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success()->message('Estado del contacto actualizado.')->send();
         return back();

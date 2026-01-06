@@ -145,10 +145,19 @@ class CompanyController extends Controller
     /**
      * Cambiar estado de empresa
      */
-    public function toggleStatus(Company $company)
+    public function toggleStatus(Request $request, Company $company)
     {
         $newStatus = $company->status === 'active' ? 'inactive' : 'active';
         $company->update(['status' => $newStatus]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success('Estado de la empresa actualizado.', 'Éxito');
         return back();

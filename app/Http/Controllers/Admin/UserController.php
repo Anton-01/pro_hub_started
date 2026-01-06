@@ -294,17 +294,32 @@ class UserController extends Controller
     /**
      * Cambiar estado del usuario
      */
-    public function toggleStatus(User $user)
+    public function toggleStatus(Request $request, User $user)
     {
         $this->authorizeUserAccess($user);
 
         if ($user->id === auth()->id()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes desactivarte a ti mismo.'
+                ], 422);
+            }
             notify()->error('No puedes desactivarte a ti mismo.', 'Error');
             return back();
         }
 
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success('Estado del usuario actualizado.', 'Éxito');
         return back();

@@ -186,12 +186,21 @@ class ModuleController extends Controller
     /**
      * Cambiar estado
      */
-    public function toggleStatus(Module $module)
+    public function toggleStatus(Request $request, Module $module)
     {
         $this->authorizeAccess($module);
 
         $newStatus = $module->status === 'active' ? 'inactive' : 'active';
         $module->update(['status' => $newStatus]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success('Estado del módulo actualizado.', 'Éxito');
         return back();

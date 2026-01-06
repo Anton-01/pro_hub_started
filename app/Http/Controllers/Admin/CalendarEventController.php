@@ -144,12 +144,21 @@ class CalendarEventController extends Controller
     /**
      * Cambiar estado
      */
-    public function toggleStatus(CalendarEvent $event)
+    public function toggleStatus(Request $request, CalendarEvent $event)
     {
         $this->authorizeAccess($event);
 
         $newStatus = $event->status === 'active' ? 'inactive' : 'active';
         $event->update(['status' => $newStatus]);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
         notify()->success('Estado del evento actualizado.', 'Éxito');
         return back();
