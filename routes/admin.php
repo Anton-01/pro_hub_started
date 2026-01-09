@@ -83,6 +83,12 @@ Route::middleware('admin')->group(function () {
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
 
+    // Importación masiva de usuarios
+    Route::get('users-import', [UserController::class, 'importView'])->name('users.import');
+    Route::post('users-import', [UserController::class, 'import'])->name('users.import.process');
+    Route::get('users-template', [UserController::class, 'downloadTemplate'])->name('users.template');
+    Route::get('users-import-report', [UserController::class, 'downloadImportReport'])->name('users.import.report');
+
     // Crear administradores (solo primary admin o super admin)
     Route::middleware('primary_admin')->group(function () {
         Route::get('users/create-admin', [UserController::class, 'createAdmin'])->name('users.create-admin');

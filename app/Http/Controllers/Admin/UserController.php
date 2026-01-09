@@ -7,12 +7,15 @@ use App\Models\User;
 use App\Models\Company;
 use App\Mail\WelcomeUserEmail;
 use App\Mail\WelcomeAdminEmail;
+use App\Imports\UsersImport;
+use App\Exports\UsersTemplateExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -378,6 +381,96 @@ class UserController extends Controller
 
         notify()->success('Avatar actualizado correctamente.', 'Éxito');
         return back();
+    }
+
+    /**
+     * Mostrar vista de importación de usuarios
+     */
+    public function importView()
+    {
+        return view('admin.users.import');
+    }
+
+    /**
+     * Descargar plantilla Excel para importación de usuarios
+     */
+    public function downloadTemplate()
+    {
+        try {
+            return Excel::download(new UsersTemplateExport(), 'plantilla_usuarios.xlsx');
+        } catch (\Exception $e) {
+            notify()->error('Error al generar la plantilla.', 'Error');
+            return back();
+        }
+    }
+
+    /**
+     * Procesar importación de usuarios desde Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240', // 10MB máximo
+        ], [
+            'file.required' => 'Debes seleccionar un archivo.',
+            'file.mimes' => 'El archivo debe ser un Excel (.xlsx, .xls) o CSV.',
+            'file.max' => 'El archivo no puede exceder 10MB.',
+        ]);
+
+        try {
+            $companyId = auth()->user()->company_id;
+            $import = new UsersImport($companyId);
+
+            Excel::import($import, $request->file('file'));
+
+            $summary = $import->getSummary();
+
+            // Generar el archivo TXT con el reporte
+            $reportContent = $import->generateReportContent();
+            $fileName = 'reporte_importacion_usuarios_' . now()->format('Y-m-d_H-i-s') . '.txt';
+            $filePath = 'imports/reports/' . $fileName;
+
+            // Guardar el archivo en storage
+            Storage::disk('local')->put($filePath, $reportContent);
+
+            // Guardar la ruta en sesión para descarga
+            session(['import_report_path' => $filePath, 'import_report_name' => $fileName]);
+
+            if ($summary['errors'] > 0) {
+                return redirect()->route('admin.users.import')
+                    ->with('import_summary', $summary)
+                    ->with('import_errors', $import->getErrors())
+                    ->with('import_success', $import->getImportedUsers())
+                    ->with('show_download', true)
+                    ->with('warning', "Importación completada con errores: {$summary['success']} registrados, {$summary['errors']} errores.");
+            }
+
+            return redirect()->route('admin.users.import')
+                ->with('import_summary', $summary)
+                ->with('import_success', $import->getImportedUsers())
+                ->with('show_download', true)
+                ->with('success', "Importación exitosa: {$summary['success']} usuarios registrados.");
+
+        } catch (\Exception $e) {
+            return redirect()->route('admin.users.import')
+                ->with('error', 'Error al procesar el archivo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Descargar el reporte de importación
+     */
+    public function downloadImportReport()
+    {
+        $filePath = session('import_report_path');
+        $fileName = session('import_report_name');
+
+        if (!$filePath || !Storage::disk('local')->exists($filePath)) {
+            notify()->error('El reporte no está disponible.', 'Error');
+            return back();
+        }
+
+        return Storage::disk('local')->download($filePath, $fileName);
     }
 
     /**

@@ -14,6 +14,9 @@
             </nav>
         </div>
         <div class="d-flex gap-2">
+            <a href="{{ route('admin.users.import') }}" class="btn btn-outline-success">
+                <i class="fas fa-file-excel me-2"></i>Importar Excel
+            </a>
             @if(auth()->user()->canCreateAdmins())
                 <a href="{{ route('admin.users.create-admin') }}" class="btn btn-outline-primary">
                     <i class="fas fa-user-shield me-2"></i>Nuevo Admin
