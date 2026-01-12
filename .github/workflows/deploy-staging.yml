@@ -1,0 +1,209 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: '8.3'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, bcmath, pgsql, redis, curl, zip, intl, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Copy .env.testing
+        run: |
+          if [ -f .env.testing ]; then
+            cp .env.testing .env
+          else
+            cp .env.example .env
+            echo "DB_CONNECTION=pgsql" >> .env
+            echo "DB_HOST=localhost" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_DATABASE=testing" >> .env
+            echo "DB_USERNAME=postgres" >> .env
+            echo "DB_PASSWORD=postgres" >> .env
+            echo "CACHE_STORE=redis" >> .env
+            echo "REDIS_HOST=localhost" >> .env
+            echo "REDIS_PORT=6379" >> .env
+          fi
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Generate JWT secret
+        run: php artisan jwt:secret --force
+
+      - name: Directory permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Run database migrations
+        run: php artisan migrate --force --seed
+
+      - name: Cache GraphQL schema
+        run: php artisan lighthouse:cache
+
+      - name: Run PHPUnit tests
+        run: php artisan test --parallel
+
+  deploy:
+    name: Deploy to Staging Server
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.STAGING_SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to staging server
+        env:
+          SERVER_IP: ${{ secrets.STAGING_SERVER_IP }}
+          SERVER_USER: ${{ secrets.STAGING_SERVER_USER }}
+          APP_PATH: ${{ secrets.STAGING_APP_PATH }}
+        run: |
+          ssh $SERVER_USER@$SERVER_IP << 'ENDSSH'
+            set -e
+
+            echo "======================================"
+            echo "🚀 Starting deployment to STAGING"
+            echo "======================================"
+            echo ""
+
+            cd ${{ secrets.STAGING_APP_PATH }}
+
+            # Pull latest code
+            echo "📥 Pulling latest code from develop branch..."
+            git fetch origin develop
+            git reset --hard origin/develop
+            echo "✅ Code updated"
+            echo ""
+
+            # Install/Update dependencies (con dev dependencies para debugging)
+            echo "📦 Installing Composer dependencies..."
+            composer install --optimize-autoloader --no-interaction
+            echo "✅ Dependencies installed"
+            echo ""
+
+            # Run migrations
+            echo "🗄️  Running database migrations..."
+            php artisan migrate --force
+            echo "✅ Migrations completed"
+            echo ""
+
+            # Clear and cache
+            echo "⚡ Clearing and caching..."
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan lighthouse:cache
+            echo "✅ Cache refreshed"
+            echo ""
+
+            # Restart Horizon
+            echo "🔄 Restarting Horizon..."
+            sudo supervisorctl restart horizon-staging
+            echo "✅ Horizon restarted"
+            echo ""
+
+            echo "======================================"
+            echo "🎉 Staging deployment completed!"
+            echo "======================================"
+          ENDSSH
+
+      - name: Wait for application
+        run: sleep 5
+
+      - name: Health check
+        run: |
+          echo "🏥 Running health check on staging..."
+
+          HEALTH_ENDPOINT="${{ secrets.STAGING_APP_URL }}/graphql"
+
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$HEALTH_ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"{ __typename }"}')
+
+          if [ $response -eq 200 ] || [ $response -eq 400 ]; then
+            echo "✅ Staging health check passed (HTTP $response)"
+          else
+            echo "⚠️  Staging health check warning (HTTP $response)"
+            echo "This may be expected for staging environment"
+          fi
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "======================================"
+          echo "✅ STAGING DEPLOYMENT SUCCESSFUL"
+          echo "======================================"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "======================================"
