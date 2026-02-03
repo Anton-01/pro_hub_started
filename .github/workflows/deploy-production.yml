@@ -1,0 +1,299 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch: # Permite trigger manual desde GitHub UI
+
+env:
+  PHP_VERSION: '8.3'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, bcmath, pgsql, redis, curl, zip, intl, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Copy .env.testing
+        run: |
+          if [ -f .env.testing ]; then
+            cp .env.testing .env
+          else
+            cp .env.example .env
+            echo "DB_CONNECTION=pgsql" >> .env
+            echo "DB_HOST=localhost" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_DATABASE=testing" >> .env
+            echo "DB_USERNAME=postgres" >> .env
+            echo "DB_PASSWORD=postgres" >> .env
+            echo "CACHE_STORE=redis" >> .env
+            echo "REDIS_HOST=localhost" >> .env
+            echo "REDIS_PORT=6379" >> .env
+          fi
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Generate JWT secret
+        run: php artisan jwt:secret --force
+
+      - name: Directory permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Run database migrations
+        run: php artisan migrate --force --seed
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: testing
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+      - name: Cache GraphQL schema
+        run: php artisan lighthouse:cache
+
+      - name: Run PHPUnit tests
+        run: php artisan test --parallel
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: testing
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: storage/logs/
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run security audit
+        run: composer audit
+
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          APP_PATH: ${{ secrets.APP_PATH }}
+        run: |
+          ssh $SERVER_USER@$SERVER_IP << 'ENDSSH'
+            set -e
+
+            echo "======================================"
+            echo "🚀 Starting deployment to PRODUCTION"
+            echo "======================================"
+            echo ""
+
+            cd ${{ secrets.APP_PATH }}
+
+            # Pull latest code
+            echo "📥 Pulling latest code from main branch..."
+            git fetch origin main
+            git reset --hard origin/main
+            echo "✅ Code updated"
+            echo ""
+
+            # Install/Update dependencies
+            echo "📦 Installing Composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+            echo "✅ Dependencies installed"
+            echo ""
+
+            # Put app in maintenance mode
+            echo "🔧 Putting application in maintenance mode..."
+            php artisan down --retry=60 --secret="${{ secrets.MAINTENANCE_SECRET }}"
+            echo "✅ Maintenance mode enabled"
+            echo ""
+
+            # Run migrations
+            echo "🗄️  Running database migrations..."
+            php artisan migrate --force
+            echo "✅ Migrations completed"
+            echo ""
+
+            # Clear all caches
+            echo "🧹 Clearing caches..."
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan event:clear
+            echo "✅ Caches cleared"
+            echo ""
+
+            # Optimize application
+            echo "⚡ Optimizing application..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+            php artisan lighthouse:cache
+            echo "✅ Application optimized"
+            echo ""
+
+            # Restart queue workers
+            echo "🔄 Restarting Horizon queue workers..."
+            sudo supervisorctl restart horizon
+            echo "✅ Horizon restarted"
+            echo ""
+
+            # Restart PHP-FPM
+            echo "🔄 Restarting PHP-FPM..."
+            sudo systemctl restart php8.3-fpm
+            echo "✅ PHP-FPM restarted"
+            echo ""
+
+            # Bring app back online
+            echo "✨ Bringing application back online..."
+            php artisan up
+            echo "✅ Application is now live"
+            echo ""
+
+            echo "======================================"
+            echo "🎉 Deployment completed successfully!"
+            echo "======================================"
+          ENDSSH
+
+      - name: Wait for application to be ready
+        run: sleep 10
+
+      - name: Health check
+        run: |
+          echo "🏥 Running health check..."
+
+          HEALTH_ENDPOINT="${{ secrets.APP_URL }}/graphql"
+
+          # Test with a simple GraphQL introspection query
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$HEALTH_ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"{ __typename }"}')
+
+          if [ $response -eq 200 ]; then
+            echo "✅ Health check passed (HTTP $response)"
+            echo "🎉 Application is responding correctly!"
+          elif [ $response -eq 400 ]; then
+            echo "✅ GraphQL endpoint is reachable (HTTP $response)"
+            echo "⚠️  Query validation error (expected for introspection without auth)"
+          else
+            echo "❌ Health check failed (HTTP $response)"
+            echo "🚨 Application may not be responding correctly!"
+            exit 1
+          fi
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "======================================"
+          echo "✅ DEPLOYMENT SUCCESSFUL"
+          echo "======================================"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "======================================"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "======================================"
+          echo "❌ DEPLOYMENT FAILED"
+          echo "======================================"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "======================================"
+          echo "Please check the logs above for details."
