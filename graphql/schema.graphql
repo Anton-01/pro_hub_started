@@ -470,9 +470,9 @@ type Query {
     "Obtener configuración de la empresa"
     companyConfiguration(companyId: ID!): CompanyConfiguration @field(resolver: "App\\GraphQL\\Queries\\CompanyConfigurationQuery")
 
-    # Admin - Requiere autenticación
-    "Listar empresas"
-    companies(search: String): [Company!]! @guard @field(resolver: "App\\GraphQL\\Queries\\CompaniesQuery")
+    # Público - Para selector de empresa en login
+    "Listar empresas activas (público para selector de login)"
+    companies(search: String): [Company!]! @field(resolver: "App\\GraphQL\\Queries\\CompaniesQuery")
 
     "Obtener una empresa por ID"
     company(id: ID!): Company @guard @find
