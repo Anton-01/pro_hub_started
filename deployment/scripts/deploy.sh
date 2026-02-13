@@ -1,16 +1,4 @@
 #!/bin/bash
-
-################################################################################
-# Manual Deployment Script for Pro Hub API
-#
-# Usage:
-#   ./deploy.sh [branch]
-#
-# Examples:
-#   ./deploy.sh main      # Deploy main branch
-#   ./deploy.sh develop   # Deploy develop branch
-################################################################################
-
 set -e
 
 # Configuration
@@ -24,41 +12,23 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-function print_success {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-function print_info {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-
-function print_warning {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-function print_error {
-    echo -e "${RED}❌ $1${NC}"
-}
-
+function print_success { echo -e "${GREEN}✅ $1${NC}"; }
+function print_info { echo -e "${BLUE}ℹ️  $1${NC}"; }
+function print_warning { echo -e "${YELLOW}⚠️  $1${NC}"; }
+function print_error { echo -e "${RED}❌ $1${NC}"; }
 function print_header {
-    echo ""
-    echo "======================================"
-    echo "$1"
-    echo "======================================"
-    echo ""
+    echo -e "\n======================================\n$1\n======================================\n"
 }
 
 # Check if running in correct directory
 if [ ! -f "$APP_PATH/artisan" ]; then
     print_error "Not in Laravel application directory!"
-    print_info "Please run this script from: $APP_PATH"
     exit 1
 fi
 
-print_header "🚀 Starting Deployment"
+print_header "🚀 Starting Professional Deployment"
 print_info "Branch: $BRANCH"
 print_info "Path: $APP_PATH"
-echo ""
 
 # Confirm deployment
 read -p "Continue with deployment? (y/n) " -n 1 -r
@@ -70,106 +40,83 @@ fi
 
 cd "$APP_PATH"
 
-# Check for uncommitted changes
-print_info "Checking for uncommitted changes..."
-if [[ -n $(git status -s) ]]; then
-    print_warning "You have uncommitted changes!"
-    git status -s
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 0
-    fi
-fi
-print_success "Git status checked"
-echo ""
+# 1. PRE-DEPLOYMENT PERMISSIONS (Evita errores de Git)
+print_info "Ensuring correct permissions for Git..."
+sudo chown -R $USER:www-data "$APP_PATH"
+print_success "Permissions ready"
 
-# Pull latest code
+# 2. UPDATE CODE
 print_info "Pulling latest code from $BRANCH..."
 git fetch origin "$BRANCH"
 git reset --hard "origin/$BRANCH"
-print_success "Code updated"
-echo ""
+print_success "Code updated to $(git rev-parse --short HEAD)"
 
-# Install/Update dependencies
+# 3. MAINTENANCE MODE
+print_info "Enabling maintenance mode..."
+php artisan down --retry=60 || print_warning "App already down"
+
+# 4. BACKEND DEPENDENCIES & MIGRATIONS
 print_info "Installing Composer dependencies..."
 composer install --no-dev --optimize-autoloader --no-interaction
-print_success "Dependencies installed"
-echo ""
+print_success "Composer updated"
 
-# Put app in maintenance mode
-print_info "Enabling maintenance mode..."
-php artisan down --retry=60 --secret="deploy-secret-$(date +%s)"
-print_success "Maintenance mode enabled"
-echo ""
-
-# Run database migrations
 print_info "Running database migrations..."
 php artisan migrate --force
 print_success "Migrations completed"
-echo ""
 
-# Clear all caches
-print_info "Clearing caches..."
+# 5. FRONTEND ASSETS (Vite/Mix) - Crucial para ver cambios visuales
+if [ -f "package.json" ]; then
+    print_info "Compiling frontend assets (NPM)..."
+    npm install
+    npm run build
+    print_success "Assets compiled successfully"
+else
+    print_warning "No package.json found, skipping NPM build"
+fi
+
+# 6. CACHE MANAGEMENT
+print_info "Clearing and rebuilding caches..."
 php artisan config:clear
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
-php artisan event:clear
-print_success "Caches cleared"
-echo ""
-
-# Optimize application
-print_info "Optimizing application..."
+# Re-cache for performance
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php artisan event:cache
-php artisan lighthouse:cache
-print_success "Application optimized"
-echo ""
+if php artisan list | grep -q "lighthouse:cache"; then
+    php artisan lighthouse:cache
+fi
+print_success "Caches optimized"
 
-# Set correct permissions
-print_info "Setting permissions..."
-sudo chown -R $USER:www-data "$APP_PATH"
-sudo chmod -R 755 "$APP_PATH"
+# 7. FINAL PERMISSIONS
+print_info "Setting final storage permissions..."
 sudo chmod -R 775 "$APP_PATH/storage"
 sudo chmod -R 775 "$APP_PATH/bootstrap/cache"
-print_success "Permissions set"
-echo ""
+print_success "Permissions finalized"
 
-# Restart services
+# 8. RESTART SERVICES
 print_info "Restarting services..."
-
-# Restart Horizon
+# Restart PHP-FPM (Limpia OPcache)
+sudo systemctl restart php8.3-fpm
+# Restart Horizon if exists
 if sudo supervisorctl status horizon > /dev/null 2>&1; then
     sudo supervisorctl restart horizon
     print_success "Horizon restarted"
-else
-    print_warning "Horizon not found in Supervisor"
 fi
+# Nginx Restart (Opcional, pero recomendado si cambiaste algo de config)
+sudo systemctl restart nginx
+print_success "Web services restarted"
 
-# Restart PHP-FPM
-sudo systemctl restart php8.3-fpm
-print_success "PHP-FPM restarted"
-
-# Restart Nginx (optional)
-# sudo systemctl restart nginx
-# print_success "Nginx restarted"
-
-echo ""
-
-# Bring app back online
+# 9. GO LIVE
 print_info "Disabling maintenance mode..."
 php artisan up
-print_success "Application is now live"
-echo ""
+print_success "Application is now LIVE"
 
-# Show last commit
-print_info "Current deployment:"
-git log -1 --pretty=format:"Commit: %h%nAuthor: %an <%ae>%nDate: %ad%nMessage: %s%n" --date=short
-echo ""
-
-print_header "✅ Deployment Completed Successfully!"
-print_success "Application deployed from branch: $BRANCH"
-echo ""
+# 10. VERIFICATION SUMMARY
+echo -e "\n${BLUE}--- DEPLOYMENT SUMMARY ---${NC}"
+LAST_COMMIT_HASH=$(git rev-parse --short HEAD)
+print_info "Current Hash: $LAST_COMMIT_HASH"
+git log -1 --pretty=format:"Message: %s%nAuthor: %an%nDate: %ad" --date=short
+echo -e "\n${YELLOW}Tip: If you don't see changes, check if local hash matches $LAST_COMMIT_HASH${NC}"
+print_header "✅ Deployment Completed!"
