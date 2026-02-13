@@ -256,17 +256,10 @@
                 document.getElementById('background_color').value = module.background_color;
                 document.getElementById('color_text').value = module.background_color;
             }
-            // Show success feedback
-            Swal.fire({
-                title: '¡Plantilla aplicada!',
-                text: 'Los campos han sido rellenados con los datos de "' + module.label + '"',
-                icon: 'success',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
+
+            // Show discreet success feedback
+            showToast('Plantilla "' + module.label + '" aplicada', 'success');
+
             // Scroll to form
             document.querySelector('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });

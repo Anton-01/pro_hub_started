@@ -52,7 +52,7 @@
                     <div class="col-md-4 col-lg-3 mb-4" data-id="{{ $banner->id }}">
                         <div class="card h-100 banner-card">
                             <div class="banner-image-wrapper position-relative">
-                                <img src="{{ Storage::url($banner->url) }}" class="card-img-top" alt="{{ $banner->alt_text }}">
+                                <img src="{{ Storage::url($banner->image_path) }}" class="card-img-top" alt="{{ $banner->alt_text }}">
                                 <div class="banner-overlay">
                                     <i class="fas fa-grip-lines drag-handle" style="cursor: grab;"></i>
                                 </div>

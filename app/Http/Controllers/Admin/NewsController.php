@@ -151,14 +151,23 @@ class NewsController extends Controller
      * Cambiar estado
      * @throws InvalidNotificationException
      */
-    public function toggleStatus(News $news)
+    public function toggleStatus(Request $request, News $news)
     {
         $this->authorizeAccess($news);
 
         $newStatus = $news->status === 'active' ? 'inactive' : 'active';
         $news->update(['status' => $newStatus]);
 
-        notify()->success('Estado de la noticia actualizado.', 'Éxito')->send();
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
+
+        notify()->success()->message('Estado de la noticia actualizado.')->send();
         return back();
     }
 

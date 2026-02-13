@@ -7,6 +7,7 @@ use App\Models\DefaultModule;
 use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class ModuleController extends Controller
 {
@@ -185,15 +186,26 @@ class ModuleController extends Controller
 
     /**
      * Cambiar estado
+     * @throws InvalidNotificationException
      */
-    public function toggleStatus(Module $module)
+
+    public function toggleStatus(Request $request, Module $module)
     {
         $this->authorizeAccess($module);
 
         $newStatus = $module->status === 'active' ? 'inactive' : 'active';
         $module->update(['status' => $newStatus]);
 
-        notify()->success('Estado del módulo actualizado.', 'Éxito');
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
+
+        notify()->success()->message('Estado del módulo actualizado.')->send();
         return back();
     }
 

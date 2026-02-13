@@ -89,6 +89,7 @@
                                     <input type="checkbox" {{ $company->status == 'active' ? 'checked' : '' }}>
                                     <span class="toggle-switch"></span>
                                 </label>
+                                <small class="status-text d-block text-muted" style="font-size: 0.7rem; margin-top: 2px;">{{ $company->status == 'active' ? 'Activo' : 'Inactivo' }}</small>
                             </td>
                             <td class="small text-muted">
                                 {{ $company->created_at->format('d/m/Y') }}

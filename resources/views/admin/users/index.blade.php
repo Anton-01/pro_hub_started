@@ -126,6 +126,7 @@
                                         <input type="checkbox" {{ $user->status == 'active' ? 'checked' : '' }}>
                                         <span class="toggle-switch"></span>
                                     </label>
+                                    <small class="status-text d-block text-muted" style="font-size: 0.7rem; margin-top: 2px;">{{ $user->status == 'active' ? 'Activo' : 'Inactivo' }}</small>
                                 @else
                                     <span class="badge badge-status-{{ $user->status }}">
                                         {{ ucfirst($user->status) }}

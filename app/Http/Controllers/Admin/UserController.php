@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class UserController extends Controller
 {
@@ -293,20 +294,37 @@ class UserController extends Controller
 
     /**
      * Cambiar estado del usuario
+     * @throws InvalidNotificationException
      */
-    public function toggleStatus(User $user)
+    public function toggleStatus(Request $request, User $user)
     {
         $this->authorizeUserAccess($user);
 
         if ($user->id === auth()->id()) {
-            notify()->error('No puedes desactivarte a ti mismo.', 'Error');
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes desactivarte a ti mismo.'
+                ], 422);
+            }
+
+            notify()->error()->message('No puedes desactivarte a ti mismo.')->send();
             return back();
         }
 
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
 
-        notify()->success('Estado del usuario actualizado.', 'Éxito');
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
+
+        notify()->success()->message('Estado del usuario actualizado.')->send();
         return back();
     }
 

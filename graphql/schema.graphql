@@ -165,12 +165,13 @@ type CalendarEvent {
 type NewsItem {
     id: ID!
     company_id: ID!
-    text: String!
+    title: String!
+    content: String!
     url: String
-    starts_at: DateTime
-    ends_at: DateTime
-    sort_order: Int!
-    is_priority: Boolean!
+    published_at: DateTime!
+    expires_at: DateTime
+    priority: Int!
+    is_active: Boolean!
     status: RecordStatus!
     creator: User
     created_at: DateTime!
@@ -202,7 +203,10 @@ type Contact {
 type BannerImage {
     id: ID!
     company_id: ID!
-    url: String!
+    title: String
+    description: String
+    url: String
+    image_path: String!
     alt_text: String
     original_name: String
     mime_type: String
@@ -212,8 +216,9 @@ type BannerImage {
     height: Int
     dimensions: String
     link_url: String
-    link_target: String!
-    sort_order: Int!
+    link_target: String
+    order: Int!
+    is_active: Boolean!
     status: RecordStatus!
     created_at: DateTime!
     updated_at: DateTime!
@@ -334,22 +339,24 @@ input UpdateModuleInput {
 
 input CreateNewsInput {
     company_id: ID!
-    text: String!
+    title: String!
+    content: String!
     url: String
-    starts_at: DateTime
-    ends_at: DateTime
-    sort_order: Int
-    is_priority: Boolean
+    published_at: DateTime
+    expires_at: DateTime
+    priority: Int
+    is_active: Boolean
     status: RecordStatus
 }
 
 input UpdateNewsInput {
-    text: String
+    title: String
+    content: String
     url: String
-    starts_at: DateTime
-    ends_at: DateTime
-    sort_order: Int
-    is_priority: Boolean
+    published_at: DateTime
+    expires_at: DateTime
+    priority: Int
+    is_active: Boolean
     status: RecordStatus
 }
 

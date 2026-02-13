@@ -16,6 +16,8 @@ class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable, SoftDeletes, HasUuid, HasApiTokens, HasActivityLog;
 
+    //public mixed $company_id;
+
     /**
      * La tabla asociada al modelo
      */

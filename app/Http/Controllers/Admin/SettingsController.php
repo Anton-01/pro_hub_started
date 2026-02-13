@@ -129,12 +129,13 @@ class SettingsController extends Controller
         $path = $file->store('logos', 'public');
 
         // Obtener dimensiones
-        $image = Image::read(Storage::disk('public')->path($path));
+        $imagePath = Storage::disk('public')->path($path);
+        [$width, $height] = getimagesize($imagePath);
 
         $config->update([
             'logo_url' => $path,
-            'logo_width' => $image->width(),
-            'logo_height' => $image->height(),
+            'logo_width' => $width,
+            'logo_height' => $height,
             'logo_file_size' => $file->getSize(),
             'logo_mime_type' => $file->getMimeType(),
         ]);

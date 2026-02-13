@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class CompanyController extends Controller
 {
@@ -144,13 +145,23 @@ class CompanyController extends Controller
 
     /**
      * Cambiar estado de empresa
+     * @throws InvalidNotificationException
      */
-    public function toggleStatus(Company $company)
+    public function toggleStatus(Request $request, Company $company)
     {
         $newStatus = $company->status === 'active' ? 'inactive' : 'active';
         $company->update(['status' => $newStatus]);
 
-        notify()->success('Estado de la empresa actualizado.', 'Éxito');
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
+
+        notify()->success()->message('Estado de la empresa actualizado.')->send();
         return back();
     }
 }

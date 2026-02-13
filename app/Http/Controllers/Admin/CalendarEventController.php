@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CalendarEventRequest;
 use App\Models\CalendarEvent;
 use Illuminate\Http\Request;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class CalendarEventController extends Controller
 {
@@ -143,15 +144,25 @@ class CalendarEventController extends Controller
 
     /**
      * Cambiar estado
+     * @throws InvalidNotificationException
      */
-    public function toggleStatus(CalendarEvent $event)
+    public function toggleStatus(Request $request, CalendarEvent $event)
     {
         $this->authorizeAccess($event);
 
         $newStatus = $event->status === 'active' ? 'inactive' : 'active';
         $event->update(['status' => $newStatus]);
 
-        notify()->success('Estado del evento actualizado.', 'Éxito');
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
+
+        notify()->success()->message('Estado del evento actualizado.')->send();
         return back();
     }
 

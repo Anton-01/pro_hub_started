@@ -7,7 +7,7 @@ use App\Http\Requests\BannerImageRequest;
 use App\Models\BannerImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
+use Mckenziearts\Notify\Exceptions\InvalidNotificationException;
 
 class BannerImageController extends Controller
 {
@@ -38,6 +38,7 @@ class BannerImageController extends Controller
 
     /**
      * Guardar nueva imagen
+     * @throws InvalidNotificationException
      */
     public function store(BannerImageRequest $request)
     {
@@ -47,16 +48,14 @@ class BannerImageController extends Controller
         $path = $file->store('banners', 'public');
 
         // Obtener dimensiones de la imagen
-        $image = Image::read(Storage::disk('public')->path($path));
-        $width = $image->width();
-        $height = $image->height();
+        $imagePath = Storage::disk('public')->path($path);
+        [$width, $height] = getimagesize($imagePath);
 
-        $lastOrder = BannerImage::where('company_id', $this->getCompanyId())
-            ->max('order') ?? 0;
+        $lastOrder = BannerImage::where('company_id', $this->getCompanyId())->max('order') ?? 0;
 
         BannerImage::create([
             'company_id' => $this->getCompanyId(),
-            'url' => $path,
+            'image_path' => $path,
             'alt_text' => $validated['alt_text'] ?? null,
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),
@@ -69,7 +68,7 @@ class BannerImageController extends Controller
             'status' => $validated['status'],
         ]);
 
-        notify()->success('Imagen subida correctamente', 'Éxito');
+        notify()->success()->message('Imagen subida correctamente')->send();
         return redirect()->route('admin.banners.index');
     }
 
@@ -95,6 +94,7 @@ class BannerImageController extends Controller
 
     /**
      * Actualizar imagen
+     * @throws InvalidNotificationException
      */
     public function update(Request $request, BannerImage $banner)
     {
@@ -111,18 +111,17 @@ class BannerImageController extends Controller
         // Si se sube una nueva imagen
         if ($request->hasFile('image')) {
             // Eliminar la imagen anterior
-            Storage::disk('public')->delete($banner->url);
+            Storage::disk('public')->delete($banner->image_path);
 
             $file = $request->file('image');
             $path = $file->store('banners', 'public');
 
             // Obtener dimensiones de la imagen
-            $image = Image::read(Storage::disk('public')->path($path));
-            $width = $image->width();
-            $height = $image->height();
+            $imagePath = Storage::disk('public')->path($path);
+            [$width, $height] = getimagesize($imagePath);
 
             $banner->update([
-                'url' => $path,
+                'image_path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
@@ -139,21 +138,22 @@ class BannerImageController extends Controller
             'status' => $validated['status'],
         ]);
 
-        notify()->success('Banner actualizado correctamente', 'Éxito');
+        notify()->success()->message('Banner actualizado correctamente')->send();
         return redirect()->route('admin.banners.index');
     }
 
     /**
      * Eliminar imagen
+     * @throws InvalidNotificationException
      */
     public function destroy(BannerImage $banner)
     {
         $this->authorizeAccess($banner);
 
-        Storage::disk('public')->delete($banner->url);
+        Storage::disk('public')->delete($banner->image_path);
         $banner->delete();
 
-        notify()->success('Imagen eliminada correctamente', 'Éxito');
+        notify()->success()->message('Imagen eliminada correctamente')->send();
         return redirect()->route('admin.banners.index');
     }
 
@@ -178,15 +178,24 @@ class BannerImageController extends Controller
 
     /**
      * Cambiar estado
+     * @throws InvalidNotificationException
      */
-    public function toggleStatus(BannerImage $banner)
+    public function toggleStatus(Request $request, BannerImage $banner)
     {
         $this->authorizeAccess($banner);
 
         $newStatus = $banner->status === 'active' ? 'inactive' : 'active';
         $banner->update(['status' => $newStatus]);
+        // Return JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => 'Estado actualizado correctamente'
+            ]);
+        }
 
-        notify()->success('Estado de la imagen actualizado', 'Éxito');
+        notify()->success()->message('Estado de la imagen actualizado')->send();
         return back();
     }
 

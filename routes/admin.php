@@ -80,8 +80,7 @@ Route::middleware('admin')->group(function () {
 
     // Usuarios de la empresa
     Route::resource('users', UserController::class);
-    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
-        ->name('users.toggle-status');
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Crear administradores (solo primary admin o super admin)
     Route::middleware('primary_admin')->group(function () {
@@ -92,8 +91,7 @@ Route::middleware('admin')->group(function () {
     // Módulos del portal
     Route::resource('modules', ModuleController::class);
     Route::post('modules/reorder', [ModuleController::class, 'reorder'])->name('modules.reorder');
-    Route::patch('modules/{module}/toggle-status', [ModuleController::class, 'toggleStatus'])
-        ->name('modules.toggle-status');
+    Route::patch('modules/{module}/toggle-status', [ModuleController::class, 'toggleStatus'])->name('modules.toggle-status');
 
     // Módulos por defecto (plantillas)
     Route::get('modules-defaults', [ModuleController::class, 'showDefaults'])->name('modules.defaults');
@@ -103,8 +101,7 @@ Route::middleware('admin')->group(function () {
     // Contactos / Directorio
     Route::resource('contacts', ContactController::class);
     Route::post('contacts/reorder', [ContactController::class, 'reorder'])->name('contacts.reorder');
-    Route::patch('contacts/{contact}/toggle-status', [ContactController::class, 'toggleStatus'])
-        ->name('contacts.toggle-status');
+    Route::patch('contacts/{contact}/toggle-status', [ContactController::class, 'toggleStatus'])->name('contacts.toggle-status');
 
     // Importación masiva de contactos
     Route::get('contacts-import', [ContactController::class, 'importView'])->name('contacts.import');
@@ -113,8 +110,7 @@ Route::middleware('admin')->group(function () {
 
     // Eventos de calendario
     Route::resource('events', CalendarEventController::class);
-    Route::patch('events/{event}/toggle-status', [CalendarEventController::class, 'toggleStatus'])
-        ->name('events.toggle-status');
+    Route::patch('events/{event}/toggle-status', [CalendarEventController::class, 'toggleStatus'])->name('events.toggle-status');
 
     // Noticias / News Ticker
     Route::resource('news', NewsController::class);
@@ -123,8 +119,7 @@ Route::middleware('admin')->group(function () {
     // Imágenes del banner/carrusel
     Route::resource('banners', BannerImageController::class);
     Route::post('banners/reorder', [BannerImageController::class, 'reorder'])->name('banners.reorder');
-    Route::patch('banners/{banner}/toggle-status', [BannerImageController::class, 'toggleStatus'])
-        ->name('banners.toggle-status');
+    Route::patch('banners/{banner}/toggle-status', [BannerImageController::class, 'toggleStatus'])->name('banners.toggle-status');
 
     // Configuración de la empresa
     Route::prefix('settings')->name('settings.')->group(function () {

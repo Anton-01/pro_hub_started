@@ -39,7 +39,7 @@ class BannerImage extends Model
      */
     protected $fillable = [
         'company_id',
-        'url',
+        'image_path',
         'alt_text',
         'original_name',
         'mime_type',

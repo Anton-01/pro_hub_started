@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\BannerImage;
 use App\Models\CacheSetting;
+use App\Models\CompanyConfiguration;
+use App\Models\Contact;
+use App\Models\News;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Closure;
@@ -208,7 +212,7 @@ class CacheService
         $tags = ["company:{$companyId}:contacts"];
 
         return $this->set($key, function () use ($companyId) {
-            return \App\Models\Contact::forCompany($companyId)
+            return Contact::forCompany($companyId)
                 ->active()
                 ->ordered()
                 ->get();
@@ -240,7 +244,7 @@ class CacheService
         $tags = ["company:{$companyId}:news"];
 
         return $this->set($key, function () use ($companyId) {
-            return \App\Models\News::forCompany($companyId)
+            return News::forCompany($companyId)
                 ->currentlyVisible()
                 ->ordered()
                 ->get();
@@ -256,7 +260,7 @@ class CacheService
         $tags = ["company:{$companyId}:banner"];
 
         return $this->set($key, function () use ($companyId) {
-            return \App\Models\BannerImage::forCompany($companyId)
+            return BannerImage::forCompany($companyId)
                 ->active()
                 ->ordered()
                 ->get();
@@ -303,7 +307,7 @@ class CacheService
 
         // Si hay búsqueda, no usar caché
         if ($search) {
-            return \App\Models\Contact::forCompany($companyId)
+            return Contact::forCompany($companyId)
                 ->active()
                 ->search($search)
                 ->ordered()
@@ -314,7 +318,7 @@ class CacheService
         $tags = ["company:{$companyId}:contacts"];
 
         return $this->getOrSet($key, function () use ($companyId) {
-            return \App\Models\Contact::forCompany($companyId)
+            return Contact::forCompany($companyId)
                 ->active()
                 ->ordered()
                 ->get();
@@ -351,10 +355,7 @@ class CacheService
         $tags = ["company:{$companyId}:news"];
 
         return $this->getOrSet($key, function () use ($companyId) {
-            return \App\Models\News::forCompany($companyId)
-                ->currentlyVisible()
-                ->ordered()
-                ->get();
+            return News::forCompany($companyId)->currentlyVisible()->ordered()->get();
         }, $settings->news_ttl, $tags);
     }
 
@@ -368,7 +369,7 @@ class CacheService
         $tags = ["company:{$companyId}:banner"];
 
         return $this->getOrSet($key, function () use ($companyId) {
-            return \App\Models\BannerImage::forCompany($companyId)
+            return BannerImage::forCompany($companyId)
                 ->active()
                 ->ordered()
                 ->get();
@@ -385,7 +386,7 @@ class CacheService
         $tags = ["company:{$companyId}:config"];
 
         return $this->getOrSet($key, function () use ($companyId) {
-            return \App\Models\CompanyConfiguration::where('company_id', $companyId)->first();
+            return CompanyConfiguration::where('company_id', $companyId)->first();
         }, $settings->config_ttl, $tags);
     }
 }
